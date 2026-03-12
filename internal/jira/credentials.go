@@ -88,7 +88,8 @@ func ProbeTokenType(domain, email, token string) (TokenType, string, error) {
 		return TokenTypeClassic, "", nil
 	}
 
-	// 2. Classic rejected (401) — try scoped: Bearer Auth against gateway URL
+	// 2. Classic rejected (401) — try scoped: Basic Auth against gateway URL
+	//    Scoped tokens use the same Basic Auth as classic, just via the gateway.
 	cloudID, err := FetchCloudID(domain)
 	if err != nil {
 		return "", "", fmt.Errorf("classic auth rejected and could not fetch Cloud ID for scoped fallback: %w", err)
@@ -99,7 +100,7 @@ func ProbeTokenType(domain, email, token string) (TokenType, string, error) {
 	if err != nil {
 		return "", "", fmt.Errorf("creating gateway probe request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.SetBasicAuth(email, token)
 	req.Header.Set("Accept", "application/json")
 
 	resp, err = httpClient.Do(req)

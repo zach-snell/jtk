@@ -171,13 +171,9 @@ func (c *Client) do(method, url string, bodyData []byte, contentType string) (*h
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	// Apply auth based on token type
-	switch c.tokenType {
-	case TokenTypeScoped:
-		req.Header.Set("Authorization", "Bearer "+c.token)
-	default:
-		req.SetBasicAuth(c.email, c.token)
-	}
+	// Both classic and scoped tokens use Basic Auth (email:api_token).
+	// The difference is only the base URL (direct site vs gateway).
+	req.SetBasicAuth(c.email, c.token)
 
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
@@ -406,13 +402,8 @@ func (c *Client) PostMultipart(path string, bodyData []byte, contentType string)
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	// Apply auth based on token type
-	switch c.tokenType {
-	case TokenTypeScoped:
-		req.Header.Set("Authorization", "Bearer "+c.token)
-	default:
-		req.SetBasicAuth(c.email, c.token)
-	}
+	// Both classic and scoped tokens use Basic Auth (email:api_token).
+	req.SetBasicAuth(c.email, c.token)
 
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("Accept", "application/json")
