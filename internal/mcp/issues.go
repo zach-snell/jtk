@@ -15,14 +15,14 @@ type ManageIssuesArgs struct {
 	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project key (for 'create', 'list_types')"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project ID (for 'list_types' — use project_key or project_id)"`
 	Summary     string `json:"summary,omitempty" jsonschema:"Issue summary/title (for 'create', 'update')"`
-	Description string `json:"description,omitempty" jsonschema:"Issue description (for 'create', 'update')"`
+	Description string `json:"description,omitempty" jsonschema:"Issue description in plain text (for 'create', 'update'). Use \\n for paragraph breaks. URLs are automatically converted to clickable links."`
 	IssueType   string `json:"issue_type,omitempty" jsonschema:"Issue type: Story, Bug, Task, Epic, Sub-task (for 'create')"`
 	Priority    string `json:"priority,omitempty" jsonschema:"Priority: Highest, High, Medium, Low, Lowest (for 'create', 'update')"`
 	AssigneeID  string `json:"assignee_id,omitempty" jsonschema:"Assignee account ID (for 'create', 'update', 'assign'). Use 'unassigned' to remove"`
 	ParentKey   string `json:"parent_key,omitempty" jsonschema:"Parent issue key (for 'create')"`
 	Labels      string `json:"labels,omitempty" jsonschema:"Comma-separated labels (for 'create', 'update')"`
 	Transition  string `json:"transition,omitempty" jsonschema:"Target transition name (for 'transition'), e.g. 'In Progress', 'Done'"`
-	Comment     string `json:"comment,omitempty" jsonschema:"Comment body text (for 'add_comment', 'link')"`
+	Comment     string `json:"comment,omitempty" jsonschema:"Comment body in plain text (for 'add_comment', 'link'). Use \\n for paragraph breaks. URLs are automatically converted to clickable links."`
 	LinkType    string `json:"link_type,omitempty" jsonschema:"Link type name (for 'link'), e.g. 'Blocks', 'Duplicate', 'Relates'"`
 	InwardKey   string `json:"inward_key,omitempty" jsonschema:"Inward issue key (for 'link') — the issue that IS affected"`
 	OutwardKey  string `json:"outward_key,omitempty" jsonschema:"Outward issue key (for 'link') — the issue that CAUSES the effect"`
