@@ -46,10 +46,12 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'CLI Commands',
-					items: [
-						{ label: 'Overview', slug: 'cli/overview' },
-						{ label: 'jtk issues', slug: 'cli/issues' },
+			label: 'CLI Commands',
+				items: [
+					{ label: 'Overview', slug: 'cli/overview' },
+					{ label: 'jtk auth', slug: 'cli/auth' },
+					{ label: 'jtk mcp', slug: 'cli/mcp' },
+					{ label: 'jtk issues', slug: 'cli/issues' },
 						{ label: 'jtk boards', slug: 'cli/boards' },
 						{ label: 'jtk projects', slug: 'cli/projects' },
 						{ label: 'jtk users', slug: 'cli/users' },

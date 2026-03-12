@@ -1,0 +1,128 @@
+---
+title: jtk auth
+description: Authentication commands — login, status, and logout.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Authentication Methods
+
+jtk supports two authentication methods:
+
+1. **Environment variables** (recommended for CI/CD and MCP servers)
+2. **Interactive login** (stores credentials locally)
+
+Environment variables take priority over stored credentials.
+
+### Environment Variables
+
+Set these environment variables to authenticate without running `jtk auth`:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `JIRA_DOMAIN` | Your Atlassian site subdomain | `mycompany` (for mycompany.atlassian.net) |
+| `JIRA_EMAIL` | Your Atlassian email address | `jane@example.com` |
+| `JIRA_API_TOKEN` | API token from Atlassian | `ATATT3xFf...` |
+| `JIRA_TOKEN_TYPE` | Optional. `classic` or `scoped` | `classic` |
+
+```bash
+export JIRA_DOMAIN="mycompany"
+export JIRA_EMAIL="jane@example.com"
+export JIRA_API_TOKEN="your-api-token"
+```
+
+<Aside type="tip">
+Generate an API token at [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+</Aside>
+
+### MCP Server Configuration
+
+When configuring jtk as an MCP server (e.g., in Claude Desktop, opencode, or Cursor), pass credentials as environment variables:
+
+```json
+{
+  "jtk": {
+    "type": "local",
+    "command": ["/path/to/jtk", "mcp"],
+    "environment": {
+      "JIRA_DOMAIN": "mycompany",
+      "JIRA_EMAIL": "jane@example.com",
+      "JIRA_API_TOKEN": "your-api-token"
+    }
+  }
+}
+```
+
+## Commands
+
+### `jtk auth`
+
+Interactive login that prompts for your Jira domain, email, and API token. Credentials are saved to `~/.config/jtk/credentials.json`.
+
+```bash
+jtk auth
+```
+
+```
+Enter your Jira domain (e.g., 'mycompany' for mycompany.atlassian.net): mycompany
+Enter your Atlassian email: jane@example.com
+Enter your API token: ****
+Authenticating...
+Authentication successful! Credentials saved.
+```
+
+jtk automatically detects whether your token is a classic API token or a scoped/fine-grained token and configures auth accordingly.
+
+### `jtk status`
+
+Shows the current authentication status, including which method is active.
+
+```bash
+jtk status
+```
+
+**With environment variables:**
+
+```
+Authenticated via environment variables
+  Domain: mycompany.atlassian.net
+  Email:  jane@example.com
+```
+
+**With stored credentials:**
+
+```
+Authenticated via stored credentials
+  Domain: mycompany.atlassian.net
+  Email:  jane@example.com
+  Token:  ATAT...61F3
+  Saved:  2025-01-15 09:30:00
+  File:   /home/jane/.config/jtk/credentials.json
+```
+
+### `jtk logout`
+
+Removes stored credentials from disk.
+
+```bash
+jtk logout
+```
+
+```
+Logged out. Credentials removed.
+```
+
+<Aside type="note">
+`jtk logout` only removes stored credentials. If you're using environment variables, those remain active until unset.
+</Aside>
+
+## Token Types
+
+jtk supports both Atlassian token types:
+
+| Type | Auth Method | Base URL | How to Identify |
+|------|-------------|----------|-----------------|
+| **Classic** | Basic Auth (email:token) | `https://{domain}.atlassian.net/rest/api/3` | Created at id.atlassian.com |
+| **Scoped** | Basic Auth (email:token) | `https://api.atlassian.com/ex/jira/{cloudId}/rest/api/3` | Created via developer console with granular permissions |
+
+jtk auto-detects the token type by probing both auth methods at startup. You can also set `JIRA_TOKEN_TYPE=classic` or `JIRA_TOKEN_TYPE=scoped` to skip auto-detection.

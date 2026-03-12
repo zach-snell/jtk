@@ -1,0 +1,121 @@
+---
+title: jtk mcp
+description: Start the Jira MCP server — stdio and HTTP Streamable transport.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Start the Model Context Protocol (MCP) server for Jira Cloud.
+
+## Usage
+
+```bash
+# stdio transport (default)
+jtk mcp
+
+# HTTP Streamable transport
+jtk mcp --port 8080
+```
+
+## Flags
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--port` | `-p` | int | `0` | Port to listen on. When `0` (default), uses stdio transport. |
+
+## Transport Modes
+
+### stdio (default)
+
+When no `--port` is specified, jtk communicates over standard input/output. This is the standard mode for local MCP clients:
+
+- **Claude Desktop** / **Claude Code**
+- **Cursor**
+- **opencode**
+- **Any MCP client using stdio**
+
+```bash
+jtk mcp
+```
+
+### HTTP Streamable
+
+When `--port` is specified, jtk starts an HTTP server using the MCP Streamable HTTP transport:
+
+```bash
+jtk mcp --port 8080
+```
+
+```
+Starting Jira MCP Server on :8080 (HTTP Streamable)
+```
+
+Use this mode for:
+- Remote MCP clients
+- Web-based integrations
+- Multi-user setups behind a reverse proxy
+
+## Prerequisites
+
+Authentication must be configured before starting the server. The server checks for credentials in this order:
+
+1. **Environment variables**: `JIRA_DOMAIN`, `JIRA_EMAIL`, `JIRA_API_TOKEN`
+2. **Stored credentials**: from `jtk auth` (saved at `~/.config/jtk/credentials.json`)
+
+If neither is found, the server exits with an error:
+
+```
+No credentials found. Either:
+  1. Run: jtk auth
+  2. Set JIRA_DOMAIN + JIRA_EMAIL + JIRA_API_TOKEN env vars
+```
+
+## Client Configuration Examples
+
+### Claude Desktop / Claude Code
+
+```json
+{
+  "mcpServers": {
+    "jtk": {
+      "command": "/path/to/jtk",
+      "args": ["mcp"],
+      "env": {
+        "JIRA_DOMAIN": "mycompany",
+        "JIRA_EMAIL": "jane@example.com",
+        "JIRA_API_TOKEN": "your-api-token"
+      }
+    }
+  }
+}
+```
+
+### opencode
+
+```json
+{
+  "mcp": {
+    "jtk": {
+      "type": "local",
+      "command": ["/path/to/jtk", "mcp"],
+      "environment": {
+        "JIRA_DOMAIN": "mycompany",
+        "JIRA_EMAIL": "jane@example.com",
+        "JIRA_API_TOKEN": "your-api-token"
+      }
+    }
+  }
+}
+```
+
+## What Happens at Startup
+
+1. **Credentials loaded** from env vars or stored credentials
+2. **Token type auto-detected** (classic vs scoped) if not set explicitly
+3. **Permission introspection** — calls Jira's `mypermissions` API to check what your token can do
+4. **Tools registered** — only actions permitted by your token appear in tool descriptions
+5. **Server ready** — begins accepting MCP requests
+
+<Aside type="tip">
+See the [MCP Tool Reference](/jtk/mcp/overview/) for the full list of 11 tools and 4 prompts available through the server.
+</Aside>

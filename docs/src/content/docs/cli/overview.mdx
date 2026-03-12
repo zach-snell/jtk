@@ -10,6 +10,8 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 jtk provides a Cobra-based CLI with the following command groups:
 
 <CardGrid>
+	<LinkCard title="jtk auth" description="Login, status, logout, and environment variable config" href="/jtk/cli/auth/" />
+	<LinkCard title="jtk mcp" description="Start the MCP server (stdio or HTTP)" href="/jtk/cli/mcp/" />
 	<LinkCard title="jtk issues" description="Get, search, create, transition, and comment on issues" href="/jtk/cli/issues/" />
 	<LinkCard title="jtk boards" description="List boards and manage sprints" href="/jtk/cli/boards/" />
 	<LinkCard title="jtk projects" description="List and inspect projects" href="/jtk/cli/projects/" />
@@ -25,21 +27,6 @@ jtk provides a Cobra-based CLI with the following command groups:
 | `--json` | Output raw JSON instead of formatted tables |
 | `--version` | Print jtk version |
 | `--help` | Show help for any command |
-
-## Authentication Commands
-
-| Command | Description |
-|---------|-------------|
-| `jtk auth` | Interactive login — prompts for domain, email, API token |
-| `jtk status` | Show current authentication status |
-| `jtk logout` | Remove stored credentials |
-
-## MCP Command
-
-| Command | Description |
-|---------|-------------|
-| `jtk mcp` | Start the MCP server on stdio |
-| `jtk mcp --port 8080` | Start the MCP server with HTTP Streamable transport |
 
 ## Git-Aware Commands
 
