@@ -11,16 +11,21 @@ import (
 	"github.com/zach-snell/jtk/internal/version"
 )
 
-// New creates and configures the Jira MCP server with all tools registered.
+// New creates and configures the Jira MCP server with a classic-auth client.
+// Prefer NewFromCredentials for automatic token type detection.
 func New(domain, email, token string) *mcp.Server {
 	client := jira.NewClient(domain, email, token)
 	return newServer(client)
 }
 
 // NewFromCredentials creates the MCP server from stored credentials.
-func NewFromCredentials(creds *jira.Credentials) *mcp.Server {
-	client := jira.NewClient(creds.Domain, creds.Email, creds.APIToken)
-	return newServer(client)
+// Automatically detects token type and configures auth accordingly.
+func NewFromCredentials(creds *jira.Credentials) (*mcp.Server, error) {
+	client, err := jira.NewClientFromCredentials(creds)
+	if err != nil {
+		return nil, fmt.Errorf("creating client: %w", err)
+	}
+	return newServer(client), nil
 }
 
 func newServer(client *jira.Client) *mcp.Server {

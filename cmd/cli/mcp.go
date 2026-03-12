@@ -32,24 +32,18 @@ func init() {
 }
 
 func runServer() {
-	// Priority: env vars > stored credentials
-	domain := os.Getenv("JIRA_DOMAIN")
-	email := os.Getenv("JIRA_EMAIL")
-	token := os.Getenv("JIRA_API_TOKEN")
+	creds, err := jira.LoadCredentials()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "No credentials found. Either:\n")
+		fmt.Fprintf(os.Stderr, "  1. Run: jtk auth\n")
+		fmt.Fprintf(os.Stderr, "  2. Set JIRA_DOMAIN + JIRA_EMAIL + JIRA_API_TOKEN env vars\n")
+		os.Exit(1)
+	}
 
-	var s *mcp.Server
-
-	if domain != "" && email != "" && token != "" {
-		s = mcpserver.New(domain, email, token)
-	} else {
-		creds, err := jira.LoadCredentials()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "No credentials found. Either:\n")
-			fmt.Fprintf(os.Stderr, "  1. Run: jtk auth\n")
-			fmt.Fprintf(os.Stderr, "  2. Set JIRA_DOMAIN + JIRA_EMAIL + JIRA_API_TOKEN env vars\n")
-			os.Exit(1)
-		}
-		s = mcpserver.NewFromCredentials(creds)
+	s, err := mcpserver.NewFromCredentials(creds)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing MCP server: %v\n", err)
+		os.Exit(1)
 	}
 
 	if port != 0 {

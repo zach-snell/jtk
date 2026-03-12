@@ -45,5 +45,10 @@ func getClient() *jira.Client {
 		fmt.Fprintf(os.Stderr, "Run 'jtk auth' to authenticate, or set JIRA_DOMAIN, JIRA_EMAIL, and JIRA_API_TOKEN env vars.\n")
 		os.Exit(1)
 	}
-	return jira.NewClient(creds.Domain, creds.Email, creds.APIToken)
+	client, err := jira.NewClientFromCredentials(creds)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating client: %v\n", err)
+		os.Exit(1)
+	}
+	return client
 }
