@@ -152,7 +152,7 @@ func registerTools(s *mcp.Server, c *jira.Client) {
 	// ─── Projects ────────────────────────────────────────────────────
 	addTool(s, disabled, mcp.Tool{
 		Name:        "manage_projects",
-		Description: "List and get Jira project details and statuses. Actions: 'list', 'get', 'list_statuses'",
+		Description: "List and get Jira project details and statuses. Actions: 'list', 'get', 'list_statuses', 'create'",
 	}, ManageProjectsHandler(c))
 
 	// ─── Dev Info ────────────────────────────────────────────────────

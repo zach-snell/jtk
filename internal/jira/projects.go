@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 )
@@ -36,6 +37,42 @@ func (c *Client) ListProjects(startAt, maxResults int) (*ProjectsResponse, error
 func (c *Client) GetProject(keyOrID string) (*Project, error) {
 	path := fmt.Sprintf("/project/%s", url.PathEscape(keyOrID))
 	return GetJSON[Project](c, path)
+}
+
+// CreateProjectRequest is the payload for creating a Jira project.
+type CreateProjectRequest struct {
+	Key                string `json:"key"`
+	Name               string `json:"name"`
+	ProjectTypeKey     string `json:"projectTypeKey"`
+	ProjectTemplateKey string `json:"projectTemplateKey,omitempty"`
+	Description        string `json:"description,omitempty"`
+	LeadAccountID      string `json:"leadAccountId"`
+	AssigneeType       string `json:"assigneeType,omitempty"`
+}
+
+// createProjectResponse is the raw API response from POST /project.
+// The create endpoint returns id as a number, unlike other endpoints
+// that return it as a string.
+type createProjectResponse struct {
+	ID  int    `json:"id"`
+	Key string `json:"key"`
+}
+
+// CreateProject creates a new Jira project.
+// Requires "Administer Jira" global permission.
+func (c *Client) CreateProject(req CreateProjectRequest) (*Project, error) {
+	data, err := c.Post("/project", req)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw createProjectResponse
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("unmarshaling created project: %w", err)
+	}
+
+	// Re-fetch the full project details so we get a consistent Project struct.
+	return c.GetProject(raw.Key)
 }
 
 // GetProjectStatuses returns all statuses grouped by issue type for a project.

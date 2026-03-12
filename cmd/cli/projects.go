@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/zach-snell/jtk/internal/jira"
 )
 
 var projectsCmd = &cobra.Command{
@@ -82,8 +83,69 @@ var projectsGetCmd = &cobra.Command{
 	},
 }
 
+var projectsCreateCmd = &cobra.Command{
+	Use:   "create",
+	Short: "Create a new Jira project",
+	Run: func(cmd *cobra.Command, args []string) {
+		client := getClient()
+
+		key, _ := cmd.Flags().GetString("key")
+		name, _ := cmd.Flags().GetString("name")
+		leadID, _ := cmd.Flags().GetString("lead")
+		projType, _ := cmd.Flags().GetString("type")
+		template, _ := cmd.Flags().GetString("template")
+		description, _ := cmd.Flags().GetString("description")
+
+		if key == "" || name == "" {
+			fmt.Fprintf(os.Stderr, "Error: --key and --name are required\n")
+			os.Exit(1)
+		}
+
+		// If no lead specified, use current user
+		if leadID == "" {
+			me, err := client.GetCurrentUser()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: --lead is required (failed to auto-detect: %v)\n", err)
+				os.Exit(1)
+			}
+			leadID = me.AccountID
+		}
+
+		if projType == "" {
+			projType = "software"
+		}
+
+		proj, err := client.CreateProject(jira.CreateProjectRequest{
+			Key:                key,
+			Name:               name,
+			ProjectTypeKey:     projType,
+			ProjectTemplateKey: template,
+			Description:        description,
+			LeadAccountID:      leadID,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		PrintOrJSON(cmd, proj, func() {
+			fmt.Printf("Created project %s: %s\n", proj.Key, proj.Name)
+			KV("ID", proj.ID)
+			KV("Type", projType)
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(projectsCmd)
 	projectsCmd.AddCommand(projectsListCmd)
 	projectsCmd.AddCommand(projectsGetCmd)
+	projectsCmd.AddCommand(projectsCreateCmd)
+
+	projectsCreateCmd.Flags().String("key", "", "Project key (e.g. PROJ)")
+	projectsCreateCmd.Flags().String("name", "", "Project name")
+	projectsCreateCmd.Flags().String("lead", "", "Lead account ID (defaults to current user)")
+	projectsCreateCmd.Flags().String("type", "software", "Project type: software, business, service_desk")
+	projectsCreateCmd.Flags().String("template", "", "Project template key (e.g. com.pyxis.greenhopper.jira:gh-simplified-agility-scrum)")
+	projectsCreateCmd.Flags().String("description", "", "Project description")
 }
