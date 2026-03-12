@@ -13,7 +13,7 @@ export default defineConfig({
 			plugins: [
 				starlightLlmsTxt({
 					projectName: 'jtk (Jira Toolkit)',
-					description: 'A dual-mode Go CLI and MCP Server for Jira Cloud. Provides 9 MCP tools with 40+ actions for issues, search, boards, sprints, projects, dev info, worklogs, versions, attachments, and users. Includes 4 MCP prompts for standup reports, sprint status, release notes, and dev tree analysis. Features git branch detection, dynamic permission introspection, response flattening, and rate limiting.',
+					description: 'A dual-mode Go CLI and MCP Server for Jira Cloud. Provides 11 MCP tools with 50+ actions for issues, search, boards, sprints, projects, dev info, worklogs, versions, attachments, users, and metrics. Includes 4 MCP prompts for standup reports, sprint status, release notes, and dev tree analysis. Features git branch detection, dynamic permission introspection, markdown-to-ADF conversion, response flattening, and rate limiting.',
 					customSets: [
 						{
 							label: 'MCP Tools',
@@ -69,8 +69,9 @@ export default defineConfig({
 						{ label: 'manage_worklogs', slug: 'mcp/manage-worklogs' },
 						{ label: 'manage_versions', slug: 'mcp/manage-versions' },
 						{ label: 'manage_attachments', slug: 'mcp/manage-attachments' },
-						{ label: 'manage_users', slug: 'mcp/manage-users' },
-						{ label: 'Prompts', slug: 'mcp/prompts' },
+					{ label: 'manage_users', slug: 'mcp/manage-users' },
+					{ label: 'manage_metrics', slug: 'mcp/manage-metrics' },
+					{ label: 'Prompts', slug: 'mcp/prompts' },
 					],
 				},
 				{

@@ -1,6 +1,6 @@
 ---
 title: manage_issues
-description: MCP tool for Jira issue operations — get, create, update, assign, transition, comment, delete, link, and more.
+description: MCP tool for Jira issue operations — get, create, update, assign, transition, comment, delete, link, watchers, and more.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -12,35 +12,44 @@ Unified tool for Jira issue operations.
 | Action | Description | Required Params | Optional Params | Permission |
 |--------|-------------|-----------------|-----------------|------------|
 | `get` | Get issue details | `issue_key` | | BROWSE_PROJECTS |
-| `create` | Create a new issue | `project_key`, `summary` | `issue_type`, `description`, `priority`, `assignee_id`, `parent_key`, `labels` | CREATE_ISSUES |
-| `update` | Update an existing issue | `issue_key` | `summary`, `description`, `priority`, `assignee_id`, `labels` | EDIT_ISSUES |
+| `create` | Create a new issue | `project_key`, `summary` | `issue_type`, `description`, `priority`, `assignee_id`, `parent_key`, `labels`, `components`, `fix_versions`, `due_date` | CREATE_ISSUES |
+| `update` | Update an existing issue | `issue_key` | `summary`, `description`, `priority`, `assignee_id`, `labels`, `components`, `fix_versions`, `due_date` | EDIT_ISSUES |
 | `assign` | Assign/unassign an issue | `issue_key`, `assignee_id` | | ASSIGN_ISSUES |
 | `transition` | Transition issue status | `issue_key`, `transition` | | TRANSITION_ISSUES |
 | `add_comment` | Add a comment | `issue_key`, `comment` | | ADD_COMMENTS |
+| `edit_comment` | Edit an existing comment | `issue_key`, `comment_id`, `comment` | | EDIT_ALL_COMMENTS or EDIT_OWN_COMMENTS |
 | `list_comments` | List issue comments | `issue_key` | `start_at`, `max_results` | BROWSE_PROJECTS |
 | `delete` | Delete an issue | `issue_key` | | DELETE_ISSUES |
 | `link` | Link two issues | `link_type`, `inward_key`, `outward_key` | `comment` | LINK_ISSUES |
+| `list_link_types` | List all available link types | | | BROWSE_PROJECTS |
 | `get_links` | Get issue links | `issue_key` | | BROWSE_PROJECTS |
 | `get_history` | Get change history | `issue_key` | `start_at`, `max_results` | BROWSE_PROJECTS |
 | `list_types` | List issue types for project | `project_key` or `project_id` | | BROWSE_PROJECTS |
+| `get_watchers` | Get issue watchers | `issue_key` | | BROWSE_PROJECTS |
+| `add_watcher` | Add a watcher | `issue_key`, `assignee_id` | | MANAGE_WATCHERS |
+| `remove_watcher` | Remove a watcher | `issue_key`, `assignee_id` | | MANAGE_WATCHERS |
 
 ## Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `action` | string | **Required.** Action to perform |
-| `issue_key` | string | Jira issue key (e.g., `PROJ-123`) |
+| `issue_key` | string | Jira issue key (e.g., `PROJ-123`). Required for most actions |
 | `project_key` | string | Project key (for `create`, `list_types`) |
 | `project_id` | string | Project ID (for `list_types` — use `project_key` or `project_id`) |
 | `summary` | string | Issue summary/title (for `create`, `update`) |
-| `description` | string | Issue description (for `create`, `update`) |
+| `description` | string | Issue description in markdown (for `create`, `update`). Supports: `# headings`, `**bold**`, `*italic*`, `~~strikethrough~~`, `[links](url)`, `- bullet lists`, `1. numbered lists`, `> blockquotes`, tables, and fenced code blocks. URLs are auto-linked. |
 | `issue_type` | string | Issue type: Story, Bug, Task, Epic, Sub-task (for `create`). Defaults to `Task` |
 | `priority` | string | Priority: Highest, High, Medium, Low, Lowest (for `create`, `update`) |
-| `assignee_id` | string | Assignee account ID (for `create`, `update`, `assign`). Use `unassigned` to remove |
+| `assignee_id` | string | Assignee account ID (for `create`, `update`, `assign`, `add_watcher`, `remove_watcher`). Use `unassigned` to remove |
 | `parent_key` | string | Parent issue key (for `create`) |
 | `labels` | string | Comma-separated labels (for `create`, `update`) |
+| `components` | string | Comma-separated component names (for `create`, `update`) |
+| `fix_versions` | string | Comma-separated fix version names (for `create`, `update`) |
+| `due_date` | string | Due date in YYYY-MM-DD format (for `create`, `update`) |
 | `transition` | string | Target transition name (for `transition`), e.g., `In Progress`, `Done` |
-| `comment` | string | Comment body text (for `add_comment`, `link`) |
+| `comment` | string | Comment body in markdown (for `add_comment`, `edit_comment`, `link`). Supports: `**bold**`, `*italic*`, `~~strikethrough~~`, `[links](url)`, `- lists`, `> blockquotes`, and fenced code blocks. URLs are auto-linked. |
+| `comment_id` | string | Comment ID (required for `edit_comment`) |
 | `link_type` | string | Link type name (for `link`), e.g., `Blocks`, `Duplicate`, `Relates` |
 | `inward_key` | string | Inward issue key (for `link`) — the issue that IS affected |
 | `outward_key` | string | Outward issue key (for `link`) — the issue that CAUSES the effect |
@@ -58,7 +67,7 @@ Unified tool for Jira issue operations.
 }
 ```
 
-### Create a bug
+### Create a bug with components and fix version
 
 ```json
 {
@@ -67,7 +76,11 @@ Unified tool for Jira issue operations.
   "summary": "Login button unresponsive on mobile",
   "issue_type": "Bug",
   "priority": "High",
-  "labels": "mobile,urgent"
+  "labels": "mobile,urgent",
+  "components": "Frontend,Auth",
+  "fix_versions": "v2.1.0",
+  "due_date": "2025-02-01",
+  "description": "## Steps to Reproduce\n1. Open login page on mobile\n2. Tap **Login** button\n3. Nothing happens\n\n> Works fine on desktop"
 }
 ```
 
@@ -78,6 +91,17 @@ Unified tool for Jira issue operations.
   "action": "transition",
   "issue_key": "PROJ-123",
   "transition": "In Progress"
+}
+```
+
+### Edit a comment
+
+```json
+{
+  "action": "edit_comment",
+  "issue_key": "PROJ-123",
+  "comment_id": "10500",
+  "comment": "Updated: this is now fixed in [PR #42](https://github.com/org/repo/pull/42)"
 }
 ```
 
@@ -93,6 +117,31 @@ Unified tool for Jira issue operations.
 }
 ```
 
+### List available link types
+
+```json
+{
+  "action": "list_link_types"
+}
+```
+
+### Manage watchers
+
+```json
+{
+  "action": "get_watchers",
+  "issue_key": "PROJ-123"
+}
+```
+
+```json
+{
+  "action": "add_watcher",
+  "issue_key": "PROJ-123",
+  "assignee_id": "5b10a2844c20165700ede21g"
+}
+```
+
 ### List issue types for a project
 
 ```json
@@ -102,6 +151,10 @@ Unified tool for Jira issue operations.
 }
 ```
 
+<Aside type="tip">
+Descriptions and comments accept **markdown** which is automatically converted to Jira's ADF (Atlassian Document Format). Supported: headings, bold, italic, strikethrough, links, bullet and numbered lists, blockquotes, tables, code blocks, and horizontal rules.
+</Aside>
+
 <Aside type="note">
-Write actions (`create`, `update`, `assign`, `transition`, `add_comment`, `delete`, `link`) are only available if the API token has the corresponding Jira permission. The tool description dynamically reflects available actions.
+Write actions are only available if the API token has the corresponding Jira permission. The tool description dynamically reflects available actions based on permission introspection at startup.
 </Aside>

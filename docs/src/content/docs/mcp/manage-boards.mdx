@@ -17,6 +17,7 @@ Manage Jira agile boards and sprints.
 | `get_active_sprint` | Get the active sprint | `board_id` | |
 | `search_sprints` | Search sprints by name | `board_id`, `query` | |
 | `create_sprint` | Create a new sprint | `board_id`, `name` | `start_date`, `end_date`, `goal` |
+| `update_sprint` | Update a sprint | `sprint_id` | `name`, `state`, `start_date`, `end_date`, `goal` |
 | `move_to_sprint` | Move issues to a sprint | `sprint_id`, `issue_keys` | |
 
 ## Parameters
@@ -76,6 +77,18 @@ Manage Jira agile boards and sprints.
   "start_date": "2025-01-28T09:00:00.000Z",
   "end_date": "2025-02-11T09:00:00.000Z",
   "goal": "Ship OAuth and fix regressions"
+}
+```
+
+### Update a sprint
+
+```json
+{
+  "action": "update_sprint",
+  "sprint_id": 101,
+  "name": "Sprint 16 - Extended",
+  "end_date": "2025-02-14T09:00:00.000Z",
+  "goal": "Ship OAuth, fix regressions, and update docs"
 }
 ```
 

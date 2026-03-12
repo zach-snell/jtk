@@ -46,21 +46,24 @@ Permissions checked:
 | `ADD_COMMENTS` | `add_comment` on `manage_issues`, `add` on `manage_worklogs` |
 | `DELETE_ISSUES` | `delete` action on `manage_issues` |
 | `LINK_ISSUES` | `link` action on `manage_issues` |
+| `CREATE_ATTACHMENTS` | `upload` action on `manage_attachments` |
+| `DELETE_ALL_ATTACHMENTS` | `delete` action on `manage_attachments` |
 
 ## Tool Overview
 
-jtk registers 10 multiplexed tools. Each tool accepts an `action` parameter that determines the operation.
+jtk registers 11 multiplexed tools. Each tool accepts an `action` parameter that determines the operation.
 
 <CardGrid>
-	<LinkCard title="manage_issues" description="get, create, update, assign, transition, comment, delete, link, history, types" href="/jtk/mcp/manage-issues/" />
+	<LinkCard title="manage_issues" description="get, create, update, assign, transition, comment, edit comment, delete, link, link types, watchers, history, types" href="/jtk/mcp/manage-issues/" />
 	<LinkCard title="manage_search" description="JQL search and quick text search" href="/jtk/mcp/manage-search/" />
-	<LinkCard title="manage_boards" description="boards, sprints, backlog, active sprint" href="/jtk/mcp/manage-boards/" />
+	<LinkCard title="manage_boards" description="boards, sprints, backlog, active sprint, update sprint" href="/jtk/mcp/manage-boards/" />
 	<LinkCard title="manage_projects" description="list, get, list statuses" href="/jtk/mcp/manage-projects/" />
 	<LinkCard title="manage_devinfo" description="branches, PRs, commits linked to issues" href="/jtk/mcp/manage-devinfo/" />
 	<LinkCard title="manage_worklogs" description="list and add time tracking entries" href="/jtk/mcp/manage-worklogs/" />
-	<LinkCard title="manage_versions" description="project versions and releases" href="/jtk/mcp/manage-versions/" />
-	<LinkCard title="manage_attachments" description="list and download attachments" href="/jtk/mcp/manage-attachments/" />
+	<LinkCard title="manage_versions" description="list, get, and create project versions" href="/jtk/mcp/manage-versions/" />
+	<LinkCard title="manage_attachments" description="list, download, upload, and delete attachments" href="/jtk/mcp/manage-attachments/" />
 	<LinkCard title="manage_users" description="current user, search, get by ID" href="/jtk/mcp/manage-users/" />
+	<LinkCard title="manage_metrics" description="cycle time, lead time, time-in-status, status transitions" href="/jtk/mcp/manage-metrics/" />
 	<LinkCard title="Prompts" description="standup_report, sprint_status, release_notes, dev_tree" href="/jtk/mcp/prompts/" />
 </CardGrid>
 

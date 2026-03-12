@@ -1,0 +1,164 @@
+---
+title: manage_metrics
+description: MCP tool for issue lifecycle metrics — cycle time, lead time, time-in-status, status transitions.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Get issue lifecycle metrics for dashboards and visualizations.
+
+## Actions
+
+| Action | Description | Required Params |
+|--------|-------------|-----------------|
+| `get_dates` | Raw date info, status transitions, time-in-status aggregation | `issue_key` |
+| `get_metrics` | Computed cycle time, lead time, time in current status, status breakdown | `issue_key` |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `get_dates` or `get_metrics` |
+| `issue_key` | string | **Required.** Jira issue key (e.g., `PROJ-123`) |
+
+## Actions Detail
+
+### `get_dates`
+
+Returns raw date information with the full status transition history and time-in-status aggregation.
+
+```json
+{
+  "action": "get_dates",
+  "issue_key": "PROJ-123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "issue_key": "PROJ-123",
+  "created": "2025-01-10T09:00:00.000+0000",
+  "updated": "2025-01-15T14:30:00.000+0000",
+  "due_date": "2025-01-20",
+  "resolution_date": "2025-01-15T14:30:00.000+0000",
+  "current_status": "Done",
+  "status_transitions": [
+    {
+      "from_status": "To Do",
+      "to_status": "In Progress",
+      "transitioned_at": "2025-01-11T10:00:00.000+0000",
+      "transitioned_by": "Jane Doe",
+      "duration_minutes": 1500,
+      "duration_display": "1d 1h 0m"
+    },
+    {
+      "from_status": "In Progress",
+      "to_status": "In Review",
+      "transitioned_at": "2025-01-14T09:00:00.000+0000",
+      "transitioned_by": "Jane Doe",
+      "duration_minutes": 4260,
+      "duration_display": "2d 23h 0m"
+    },
+    {
+      "from_status": "In Review",
+      "to_status": "Done",
+      "transitioned_at": "2025-01-15T14:30:00.000+0000",
+      "transitioned_by": "Bob Smith",
+      "duration_minutes": 1770,
+      "duration_display": "1d 5h 30m"
+    }
+  ],
+  "status_summary": [
+    {
+      "status": "In Progress",
+      "total_duration_minutes": 4260,
+      "total_duration_display": "2d 23h 0m",
+      "visit_count": 1
+    },
+    {
+      "status": "In Review",
+      "total_duration_minutes": 1770,
+      "total_duration_display": "1d 5h 30m",
+      "visit_count": 1
+    },
+    {
+      "status": "To Do",
+      "total_duration_minutes": 1500,
+      "total_duration_display": "1d 1h 0m",
+      "visit_count": 1
+    }
+  ]
+}
+```
+
+### `get_metrics`
+
+Returns computed metrics ideal for dashboard widgets and visualizations.
+
+```json
+{
+  "action": "get_metrics",
+  "issue_key": "PROJ-123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "issue_key": "PROJ-123",
+  "lead_time_minutes": 7530,
+  "lead_time_display": "5d 5h 30m",
+  "cycle_time_minutes": 6030,
+  "cycle_time_display": "4d 4h 30m",
+  "current_status": "Done",
+  "time_in_current_minutes": 120,
+  "time_in_current_display": "2h 0m",
+  "status_summary": [
+    {
+      "status": "In Progress",
+      "total_duration_minutes": 4260,
+      "total_duration_display": "2d 23h 0m",
+      "visit_count": 1
+    },
+    {
+      "status": "In Review",
+      "total_duration_minutes": 1770,
+      "total_duration_display": "1d 5h 30m",
+      "visit_count": 1
+    },
+    {
+      "status": "To Do",
+      "total_duration_minutes": 1500,
+      "total_duration_display": "1d 1h 0m",
+      "visit_count": 1
+    }
+  ]
+}
+```
+
+## Metric Definitions
+
+| Metric | Definition |
+|--------|------------|
+| **Lead time** | Total time from issue creation to resolution (or now if unresolved) |
+| **Cycle time** | Time from first entry into an "in progress" status to resolution (or now) |
+| **Time in current status** | How long the issue has been in its current status |
+| **Status summary** | Aggregated time per status across all visits, sorted by duration descending |
+
+<Aside type="tip">
+**Cycle time** starts when the issue first enters a recognized "in progress" status: `In Progress`, `In Review`, `In Testing`, `In QA`, `In Dev`, `Development`, `Coding`, or `Implementing` (case-insensitive).
+</Aside>
+
+## Use Cases
+
+- **Sprint retrospectives** — Compare cycle times across issues to identify bottlenecks
+- **Dashboard widgets** — Build time-in-status charts and throughput metrics
+- **SLA tracking** — Monitor lead time against team targets
+- **Process improvement** — Identify statuses where issues spend the most time
+
+<Aside type="note">
+Metrics are derived from the issue's changelog. The tool fetches all changelog pages automatically. For issues with very long histories (100+ transitions), the initial call may take slightly longer due to pagination.
+</Aside>

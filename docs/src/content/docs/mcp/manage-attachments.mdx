@@ -1,24 +1,29 @@
 ---
 title: manage_attachments
-description: MCP tool for managing Jira issue attachments.
+description: MCP tool for managing Jira issue attachments — list, download, upload, and delete.
 ---
+
+import { Aside } from '@astrojs/starlight/components';
 
 Manage Jira issue attachments.
 
 ## Actions
 
-| Action | Description | Required Params | Optional Params |
-|--------|-------------|-----------------|-----------------|
-| `list` | List attachments on an issue | `issue_key` | |
-| `download` | Download an attachment | `attachment_id` | |
+| Action | Description | Required Params | Permission |
+|--------|-------------|-----------------|------------|
+| `list` | List attachments on an issue | `issue_key` | BROWSE_PROJECTS |
+| `download` | Download an attachment | `attachment_id` | BROWSE_PROJECTS |
+| `upload` | Upload a file as an attachment | `issue_key`, `file_path` | CREATE_ATTACHMENTS |
+| `delete` | Delete an attachment | `attachment_id` | DELETE_ALL_ATTACHMENTS |
 
 ## Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `action` | string | **Required.** `list` or `download` |
-| `issue_key` | string | Jira issue key (for `list`) |
-| `attachment_id` | string | Attachment ID (for `download`) |
+| `action` | string | **Required.** `list`, `download`, `upload`, or `delete` |
+| `issue_key` | string | Jira issue key (for `list`, `upload`) |
+| `attachment_id` | string | Attachment ID (for `download`, `delete`) |
+| `file_path` | string | Absolute path to the file to upload (for `upload`). Note: paths refer to the MCP server's filesystem. In stdio mode this is the local machine. |
 
 ## Examples
 
@@ -81,3 +86,52 @@ Manage Jira issue attachments.
 ```
 
 Downloaded files are saved to a temporary directory at `/tmp/jtk-downloads/`.
+
+### Upload a file
+
+```json
+{
+  "action": "upload",
+  "issue_key": "PROJ-123",
+  "file_path": "/path/to/report.pdf"
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "10202",
+  "filename": "report.pdf",
+  "size": 51200,
+  "mime_type": "application/pdf",
+  "issue_key": "PROJ-123",
+  "status": "uploaded"
+}
+```
+
+### Delete an attachment
+
+```json
+{
+  "action": "delete",
+  "attachment_id": "10200"
+}
+```
+
+**Response:**
+
+```json
+{
+  "attachment_id": "10200",
+  "status": "deleted"
+}
+```
+
+<Aside type="note">
+Write actions (`upload`, `delete`) are only available if the API token has the corresponding Jira permissions (`CREATE_ATTACHMENTS`, `DELETE_ALL_ATTACHMENTS`). The tool description dynamically reflects available actions based on permission introspection at startup.
+</Aside>
+
+<Aside type="tip">
+The `file_path` parameter refers to a path on the **MCP server's filesystem**. In stdio mode (e.g., Claude Desktop, opencode), this is your local machine. In HTTP Streamable mode, it refers to the server's filesystem.
+</Aside>

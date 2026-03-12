@@ -11,14 +11,19 @@ List and get project versions (releases/fixVersions).
 |--------|-------------|-----------------|-----------------|
 | `list` | List project versions | `project_key` | |
 | `get` | Get version details | `version_id` | |
+| `create` | Create a new version | `project_key`, `name` | `description`, `start_date`, `release_date` |
 
 ## Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `action` | string | **Required.** `list` or `get` |
-| `project_key` | string | Project key (for `list`) |
+| `action` | string | **Required.** `list`, `get`, or `create` |
+| `project_key` | string | Project key (for `list`, `create`) |
 | `version_id` | string | Version ID (for `get`) |
+| `name` | string | Version name (required for `create`) |
+| `description` | string | Version description (for `create`) |
+| `start_date` | string | Start date YYYY-MM-DD (for `create`) |
+| `release_date` | string | Release date YYYY-MM-DD (for `create`) |
 
 ## Examples
 
@@ -63,5 +68,18 @@ List and get project versions (releases/fixVersions).
 {
   "action": "get",
   "version_id": "10101"
+}
+```
+
+### Create a version
+
+```json
+{
+  "action": "create",
+  "project_key": "PROJ",
+  "name": "v3.0.0",
+  "description": "Major release with OAuth support",
+  "start_date": "2025-02-01",
+  "release_date": "2025-03-01"
 }
 ```
