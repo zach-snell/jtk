@@ -1,0 +1,33 @@
+# Project Overview
+
+This is **bold text** and *italic text* and `inline code`.
+
+## Requirements
+
+- First item
+
+- Second item with **bold**
+
+1. Step one
+
+2. Step two
+
+```go
+fmt.Println("hello")```
+
+> This is a quoted remark.
+
+---
+
+Mention: @John Doe and emoji: :thumbsup:
+
+| Name
+
+ | Value
+
+ | 
+| Alpha
+
+ | 100
+
+ |

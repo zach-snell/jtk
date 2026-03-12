@@ -1,0 +1,29 @@
+{
+  "content": [
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "text": "This is a quote.",
+              "type": "text"
+            }
+          ],
+          "type": "paragraph"
+        },
+        {
+          "content": [
+            {
+              "text": "It spans multiple lines.",
+              "type": "text"
+            }
+          ],
+          "type": "paragraph"
+        }
+      ],
+      "type": "blockquote"
+    }
+  ],
+  "type": "doc",
+  "version": 1
+}

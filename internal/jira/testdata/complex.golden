@@ -1,0 +1,350 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "level": 1
+      },
+      "content": [
+        {
+          "text": "Project README",
+          "type": "text"
+        }
+      ],
+      "type": "heading"
+    },
+    {
+      "content": [
+        {
+          "text": "This is a ",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "type": "strong"
+            }
+          ],
+          "text": "complex",
+          "type": "text"
+        },
+        {
+          "text": " document with ",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "type": "em"
+            }
+          ],
+          "text": "multiple",
+          "type": "text"
+        },
+        {
+          "text": " features.",
+          "type": "text"
+        }
+      ],
+      "type": "paragraph"
+    },
+    {
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "text": "Features",
+          "type": "text"
+        }
+      ],
+      "type": "heading"
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "marks": [
+                    {
+                      "type": "strong"
+                    }
+                  ],
+                  "text": "Bold",
+                  "type": "text"
+                },
+                {
+                  "text": " items",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "listItem"
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "marks": [
+                    {
+                      "type": "em"
+                    }
+                  ],
+                  "text": "Italic",
+                  "type": "text"
+                },
+                {
+                  "text": " items",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "listItem"
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "marks": [
+                    {
+                      "type": "code"
+                    }
+                  ],
+                  "text": "Code",
+                  "type": "text"
+                },
+                {
+                  "text": " items",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "listItem"
+        }
+      ],
+      "type": "bulletList"
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "text": "Important note here.",
+              "type": "text"
+            }
+          ],
+          "type": "paragraph"
+        }
+      ],
+      "type": "blockquote"
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "First step",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "listItem"
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "text": "Second step",
+                  "type": "text"
+                }
+              ],
+              "type": "paragraph"
+            }
+          ],
+          "type": "listItem"
+        }
+      ],
+      "type": "orderedList"
+    },
+    {
+      "attrs": {
+        "language": "python"
+      },
+      "content": [
+        {
+          "text": "print(\"hello world\")",
+          "type": "text"
+        }
+      ],
+      "type": "codeBlock"
+    },
+    {
+      "attrs": {
+        "isNumberColumnEnabled": false,
+        "layout": "default"
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Feature",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableHeader"
+            },
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Status",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableHeader"
+            }
+          ],
+          "type": "tableRow"
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Tables",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableCell"
+            },
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Done",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableCell"
+            }
+          ],
+          "type": "tableRow"
+        },
+        {
+          "content": [
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Lists",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableCell"
+            },
+            {
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Done",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "paragraph"
+                }
+              ],
+              "type": "tableCell"
+            }
+          ],
+          "type": "tableRow"
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "type": "rule"
+    },
+    {
+      "content": [
+        {
+          "text": "Visit ",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "href": "https://example.com"
+              },
+              "type": "link"
+            }
+          ],
+          "text": "our site",
+          "type": "text"
+        },
+        {
+          "text": " or ",
+          "type": "text"
+        },
+        {
+          "marks": [
+            {
+              "attrs": {
+                "href": "https://example.com/docs"
+              },
+              "type": "link"
+            }
+          ],
+          "text": "https://example.com/docs",
+          "type": "text"
+        },
+        {
+          "text": " for more.",
+          "type": "text"
+        }
+      ],
+      "type": "paragraph"
+    }
+  ],
+  "type": "doc",
+  "version": 1
+}

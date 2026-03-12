@@ -3,6 +3,7 @@ module github.com/zach-snell/jtk
 go 1.26.0
 
 require (
+	github.com/google/go-cmp v0.7.0
 	github.com/modelcontextprotocol/go-sdk v1.4.0
 	github.com/spf13/cobra v1.10.2
 )

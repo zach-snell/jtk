@@ -1,0 +1,28 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "language": "go"
+      },
+      "content": [
+        {
+          "text": "func main() {\n\tfmt.Println(\"hello\")\n}",
+          "type": "text"
+        }
+      ],
+      "type": "codeBlock"
+    },
+    {
+      "attrs": {},
+      "content": [
+        {
+          "text": "plain code block",
+          "type": "text"
+        }
+      ],
+      "type": "codeBlock"
+    }
+  ],
+  "type": "doc",
+  "version": 1
+}

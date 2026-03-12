@@ -1,0 +1,168 @@
+{
+  "type": "doc",
+  "version": 1,
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [
+        { "type": "text", "text": "Project Overview" }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "This is " },
+        { "type": "text", "text": "bold text", "marks": [{ "type": "strong" }] },
+        { "type": "text", "text": " and " },
+        { "type": "text", "text": "italic text", "marks": [{ "type": "em" }] },
+        { "type": "text", "text": " and " },
+        { "type": "text", "text": "inline code", "marks": [{ "type": "code" }] },
+        { "type": "text", "text": "." }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [
+        { "type": "text", "text": "Requirements" }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "First item" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Second item with " },
+                { "type": "text", "text": "bold", "marks": [{ "type": "strong" }] }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "orderedList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Step one" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Step two" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": { "language": "go" },
+      "content": [
+        { "type": "text", "text": "fmt.Println(\"hello\")" }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            { "type": "text", "text": "This is a quoted remark." }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rule"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Mention: " },
+        { "type": "mention", "attrs": { "id": "abc123", "text": "John Doe" } },
+        { "type": "text", "text": " and emoji: " },
+        { "type": "emoji", "attrs": { "shortName": ":thumbsup:" } }
+      ]
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [{ "type": "text", "text": "Name" }]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [{ "type": "text", "text": "Value" }]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [{ "type": "text", "text": "Alpha" }]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [{ "type": "text", "text": "100" }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

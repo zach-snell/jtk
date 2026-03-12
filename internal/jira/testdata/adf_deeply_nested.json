@@ -1,0 +1,109 @@
+{
+  "type": "doc",
+  "version": 1,
+  "content": [
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Top level" }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "content": [
+                        { "type": "text", "text": "Nested level 1" }
+                      ]
+                    },
+                    {
+                      "type": "bulletList",
+                      "content": [
+                        {
+                          "type": "listItem",
+                          "content": [
+                            {
+                              "type": "paragraph",
+                              "content": [
+                                { "type": "text", "text": "Nested level 2" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "mediaSingle",
+      "content": [
+        {
+          "type": "media",
+          "attrs": {
+            "id": "img-001",
+            "type": "file",
+            "alt": "Architecture diagram",
+            "width": 1920,
+            "height": 1080
+          }
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Check this link: " },
+        { "type": "inlineCard", "attrs": { "url": "https://example.com/issue/PROJ-42" } }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "bold and italic",
+          "marks": [
+            { "type": "strong" },
+            { "type": "em" }
+          ]
+        },
+        { "type": "text", "text": " then " },
+        {
+          "type": "text",
+          "text": "strikethrough",
+          "marks": [{ "type": "strike" }]
+        },
+        { "type": "text", "text": " and " },
+        {
+          "type": "text",
+          "text": "underlined",
+          "marks": [{ "type": "underline" }]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Line one" },
+        { "type": "hardBreak" },
+        { "type": "text", "text": "Line two" }
+      ]
+    }
+  ]
+}
