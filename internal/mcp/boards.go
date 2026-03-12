@@ -83,14 +83,14 @@ func ManageBoardsHandler(c *jira.Client) func(context.Context, *mcp.CallToolRequ
 				Total   int          `json:"total"`
 				Sprints []flatSprint `json:"sprints"`
 			}{Total: result.Total}
-			for _, sp := range result.Values {
+			for i := range result.Values {
 				flat.Sprints = append(flat.Sprints, flatSprint{
-					ID:        sp.ID,
-					Name:      sp.Name,
-					State:     sp.State,
-					StartDate: sp.StartDate,
-					EndDate:   sp.EndDate,
-					Goal:      sp.Goal,
+					ID:        result.Values[i].ID,
+					Name:      result.Values[i].Name,
+					State:     result.Values[i].State,
+					StartDate: result.Values[i].StartDate,
+					EndDate:   result.Values[i].EndDate,
+					Goal:      result.Values[i].Goal,
 				})
 			}
 			return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
@@ -159,14 +159,14 @@ func ManageBoardsHandler(c *jira.Client) func(context.Context, *mcp.CallToolRequ
 				Total   int          `json:"total"`
 				Sprints []flatSprint `json:"sprints"`
 			}{Query: args.Query, Total: len(sprints)}
-			for _, sp := range sprints {
+			for i := range sprints {
 				flat.Sprints = append(flat.Sprints, flatSprint{
-					ID:        sp.ID,
-					Name:      sp.Name,
-					State:     sp.State,
-					StartDate: sp.StartDate,
-					EndDate:   sp.EndDate,
-					Goal:      sp.Goal,
+					ID:        sprints[i].ID,
+					Name:      sprints[i].Name,
+					State:     sprints[i].State,
+					StartDate: sprints[i].StartDate,
+					EndDate:   sprints[i].EndDate,
+					Goal:      sprints[i].Goal,
 				})
 			}
 			return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil

@@ -73,12 +73,12 @@ func (t *Table) Flush() {
 // --- Key-value helpers (single-item display like `status`) ---
 
 // KV prints a labeled key-value pair with consistent padding.
-func KV(label string, value string) {
+func KV(label, value string) {
 	fmt.Printf("  %-16s%s\n", label+":", value)
 }
 
 // KVf prints a formatted key-value pair.
-func KVf(label string, format string, args ...any) {
+func KVf(label, format string, args ...any) {
 	KV(label, fmt.Sprintf(format, args...))
 }
 

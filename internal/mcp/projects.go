@@ -34,14 +34,14 @@ func ManageProjectsHandler(c *jira.Client) func(context.Context, *mcp.CallToolRe
 				Total    int           `json:"total"`
 				Projects []flatProject `json:"projects"`
 			}{Total: result.Total}
-			for _, p := range result.Values {
+			for i := range result.Values {
 				fp := flatProject{
-					Key:         p.Key,
-					Name:        p.Name,
-					ProjectType: p.ProjectType,
+					Key:         result.Values[i].Key,
+					Name:        result.Values[i].Name,
+					ProjectType: result.Values[i].ProjectType,
 				}
-				if p.Lead != nil {
-					fp.Lead = p.Lead.DisplayName
+				if result.Values[i].Lead != nil {
+					fp.Lead = result.Values[i].Lead.DisplayName
 				}
 				flat.Projects = append(flat.Projects, fp)
 			}

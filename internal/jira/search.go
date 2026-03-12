@@ -64,7 +64,7 @@ func (c *Client) SearchJQLPaginated(jql string, maxResults int, nextPageToken st
 }
 
 // QuickSearch performs a text-based search using JQL text matching.
-func (c *Client) QuickSearch(text string, projectKey string, maxResults int) (*SearchResult, error) {
+func (c *Client) QuickSearch(text, projectKey string, maxResults int) (*SearchResult, error) {
 	jql := fmt.Sprintf("text ~ %q", text)
 	if projectKey != "" {
 		jql = fmt.Sprintf("project = %q AND %s", projectKey, jql)

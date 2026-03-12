@@ -344,22 +344,23 @@ func renderADFNode(node map[string]interface{}, sb *strings.Builder, depth int, 
 		mediaType, _ := attrs["type"].(string)
 		alt, _ := attrs["alt"].(string)
 
-		if alt != "" {
-			sb.WriteString(fmt.Sprintf("[Media: %s", alt))
-		} else if mediaType != "" {
-			sb.WriteString(fmt.Sprintf("[Media: %s", mediaType))
-		} else {
+		switch {
+		case alt != "":
+			fmt.Fprintf(sb, "[Media: %s", alt)
+		case mediaType != "":
+			fmt.Fprintf(sb, "[Media: %s", mediaType)
+		default:
 			sb.WriteString("[Media")
 		}
 
 		if w, ok := attrs["width"].(float64); ok {
 			if h, ok := attrs["height"].(float64); ok {
-				sb.WriteString(fmt.Sprintf(" (%dx%d)", int(w), int(h)))
+				fmt.Fprintf(sb, " (%dx%d)", int(w), int(h))
 			}
 		}
 
 		if mediaID != "" {
-			sb.WriteString(fmt.Sprintf(" | id=%s", mediaID))
+			fmt.Fprintf(sb, " | id=%s", mediaID)
 		}
 		sb.WriteString("]")
 

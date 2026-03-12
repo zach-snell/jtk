@@ -76,23 +76,23 @@ func flattenSearchResult(result *jira.SearchResult) string {
 		NextPageToken: result.NextPageToken,
 	}
 
-	for _, issue := range result.Issues {
+	for i := range result.Issues {
 		fi := flatIssue{
-			Key:     issue.Key,
-			Summary: issue.Fields.Summary,
-			Updated: issue.Fields.Updated,
+			Key:     result.Issues[i].Key,
+			Summary: result.Issues[i].Fields.Summary,
+			Updated: result.Issues[i].Fields.Updated,
 		}
-		if issue.Fields.Status != nil {
-			fi.Status = issue.Fields.Status.Name
+		if result.Issues[i].Fields.Status != nil {
+			fi.Status = result.Issues[i].Fields.Status.Name
 		}
-		if issue.Fields.IssueType != nil {
-			fi.Type = issue.Fields.IssueType.Name
+		if result.Issues[i].Fields.IssueType != nil {
+			fi.Type = result.Issues[i].Fields.IssueType.Name
 		}
-		if issue.Fields.Priority != nil {
-			fi.Priority = issue.Fields.Priority.Name
+		if result.Issues[i].Fields.Priority != nil {
+			fi.Priority = result.Issues[i].Fields.Priority.Name
 		}
-		if issue.Fields.Assignee != nil {
-			fi.Assignee = issue.Fields.Assignee.DisplayName
+		if result.Issues[i].Fields.Assignee != nil {
+			fi.Assignee = result.Issues[i].Fields.Assignee.DisplayName
 		} else {
 			fi.Assignee = "unassigned"
 		}

@@ -42,17 +42,17 @@ func ManageWorklogsHandler(c *jira.Client, perms map[string]bool) func(context.C
 				Total    int           `json:"total"`
 				Worklogs []flatWorklog `json:"worklogs"`
 			}{Total: result.Total}
-			for _, w := range result.Worklogs {
+			for i := range result.Worklogs {
 				author := "unknown"
-				if w.Author != nil {
-					author = w.Author.DisplayName
+				if result.Worklogs[i].Author != nil {
+					author = result.Worklogs[i].Author.DisplayName
 				}
 				flat.Worklogs = append(flat.Worklogs, flatWorklog{
-					ID:        w.ID,
+					ID:        result.Worklogs[i].ID,
 					Author:    author,
-					TimeSpent: w.TimeSpent,
-					Started:   w.Started,
-					Comment:   jira.ADFToPlainText(w.Comment),
+					TimeSpent: result.Worklogs[i].TimeSpent,
+					Started:   result.Worklogs[i].Started,
+					Comment:   jira.ADFToPlainText(result.Worklogs[i].Comment),
 				})
 			}
 			return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
