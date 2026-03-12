@@ -122,6 +122,7 @@ type SearchResult struct {
 	Issues        []Issue `json:"issues"`
 	Expand        string  `json:"expand,omitempty"`
 	NextPageToken string  `json:"nextPageToken,omitempty"`
+	IsLast        bool    `json:"isLast,omitempty"`
 }
 
 // Transition represents a possible issue state transition.

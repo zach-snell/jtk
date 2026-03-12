@@ -13,11 +13,20 @@ type SearchJQLRequest struct {
 	NextPageToken string   `json:"nextPageToken,omitempty"`
 }
 
+// defaultSearchFields are the fields requested in every JQL search.
+// The POST /search/jql endpoint returns only "id" by default — we must be explicit.
+var defaultSearchFields = []string{
+	"summary", "status", "issuetype", "priority", "assignee", "reporter",
+	"project", "created", "updated", "description", "labels", "components",
+	"resolution", "fixVersions", "parent",
+}
+
 // SearchJQL performs a JQL search using the new POST /rest/api/3/search/jql endpoint.
 // The old GET /rest/api/3/search?jql=... endpoint was deprecated and removed May 2025.
 func (c *Client) SearchJQL(jql string, startAt, maxResults int) (*SearchResult, error) {
 	reqBody := SearchJQLRequest{
-		JQL: jql,
+		JQL:    jql,
+		Fields: defaultSearchFields,
 	}
 	if maxResults > 0 {
 		reqBody.MaxResults = maxResults
@@ -41,7 +50,8 @@ func (c *Client) SearchJQL(jql string, startAt, maxResults int) (*SearchResult, 
 // SearchJQLPaginated performs a JQL search with cursor-based pagination using nextPageToken.
 func (c *Client) SearchJQLPaginated(jql string, maxResults int, nextPageToken string) (*SearchResult, error) {
 	reqBody := SearchJQLRequest{
-		JQL: jql,
+		JQL:    jql,
+		Fields: defaultSearchFields,
 	}
 	if maxResults > 0 {
 		reqBody.MaxResults = maxResults
