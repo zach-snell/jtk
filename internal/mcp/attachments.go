@@ -11,13 +11,14 @@ import (
 )
 
 type ManageAttachmentsArgs struct {
-	Action       string `json:"action" jsonschema:"Action to perform: 'list', 'download'" jsonschema_enum:"list,download"`
-	IssueKey     string `json:"issue_key,omitempty" jsonschema:"Jira issue key (for 'list')"`
-	AttachmentID string `json:"attachment_id,omitempty" jsonschema:"Attachment ID (for 'download')"`
+	Action       string `json:"action" jsonschema:"Action to perform: 'list', 'download', 'upload', 'delete'" jsonschema_enum:"list,download,upload,delete"`
+	IssueKey     string `json:"issue_key,omitempty" jsonschema:"Jira issue key (for 'list', 'upload')"`
+	AttachmentID string `json:"attachment_id,omitempty" jsonschema:"Attachment ID (for 'download', 'delete')"`
+	FilePath     string `json:"file_path,omitempty" jsonschema:"Absolute path to the file to upload (required for upload). Note: paths refer to the MCP server's filesystem. In stdio mode this is the local machine."`
 }
 
-// ManageAttachmentsHandler handles attachment operations.
-func ManageAttachmentsHandler(c *jira.Client) func(context.Context, *mcp.CallToolRequest, ManageAttachmentsArgs) (*mcp.CallToolResult, any, error) {
+// ManageAttachmentsHandler handles attachment operations with permission gating.
+func ManageAttachmentsHandler(c *jira.Client, perms map[string]bool) func(context.Context, *mcp.CallToolRequest, ManageAttachmentsArgs) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, args ManageAttachmentsArgs) (*mcp.CallToolResult, any, error) {
 		switch args.Action {
 		case "list":
@@ -91,8 +92,57 @@ func ManageAttachmentsHandler(c *jira.Client) func(context.Context, *mcp.CallToo
 				"status":        "downloaded",
 			}, 30000)), nil, nil
 
+		case "upload":
+			if !perms["CREATE_ATTACHMENTS"] {
+				return ToolResultError("token lacks CREATE_ATTACHMENTS permission"), nil, nil
+			}
+			if args.IssueKey == "" || args.FilePath == "" {
+				return ToolResultError("issue_key and file_path are required for 'upload' action"), nil, nil
+			}
+
+			// Read the file from the server filesystem
+			fileContent, err := os.ReadFile(args.FilePath)
+			if err != nil {
+				return ToolResultError(fmt.Sprintf("failed to read file %q: %v", args.FilePath, err)), nil, nil
+			}
+
+			filename := filepath.Base(args.FilePath)
+			result, err := c.UploadAttachment(args.IssueKey, filename, fileContent)
+			if err != nil {
+				return ToolResultError(fmt.Sprintf("failed to upload attachment: %v", err)), nil, nil
+			}
+
+			if len(result) == 0 {
+				return ToolResultError("upload succeeded but returned no attachment metadata"), nil, nil
+			}
+
+			att := result[0]
+			return ToolResultText(jira.SafeJSON(map[string]interface{}{
+				"id":        att.ID,
+				"filename":  att.Filename,
+				"size":      att.Size,
+				"mime_type": att.MimeType,
+				"issue_key": args.IssueKey,
+				"status":    "uploaded",
+			}, 30000)), nil, nil
+
+		case "delete":
+			if !perms["DELETE_ALL_ATTACHMENTS"] {
+				return ToolResultError("token lacks DELETE_ALL_ATTACHMENTS permission"), nil, nil
+			}
+			if args.AttachmentID == "" {
+				return ToolResultError("attachment_id is required for 'delete' action"), nil, nil
+			}
+			if err := c.DeleteAttachment(args.AttachmentID); err != nil {
+				return ToolResultError(fmt.Sprintf("failed to delete attachment: %v", err)), nil, nil
+			}
+			return ToolResultText(jira.SafeJSON(map[string]interface{}{
+				"attachment_id": args.AttachmentID,
+				"status":        "deleted",
+			}, 30000)), nil, nil
+
 		default:
-			return ToolResultError(fmt.Sprintf("unknown action: %s. Valid actions: list, download", args.Action)), nil, nil
+			return ToolResultError(fmt.Sprintf("unknown action: %s. Valid actions: list, download, upload, delete", args.Action)), nil, nil
 		}
 	}
 }

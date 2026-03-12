@@ -55,6 +55,8 @@ func getPermissions(c *jira.Client) map[string]bool {
 		"ASSIGN_ISSUES",
 		"DELETE_ISSUES",
 		"LINK_ISSUES",
+		"CREATE_ATTACHMENTS",
+		"DELETE_ALL_ATTACHMENTS",
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to fetch permissions for introspection: %v\n", err)
@@ -67,6 +69,8 @@ func getPermissions(c *jira.Client) map[string]bool {
 		perms["ASSIGN_ISSUES"] = true
 		perms["DELETE_ISSUES"] = true
 		perms["LINK_ISSUES"] = true
+		perms["CREATE_ATTACHMENTS"] = true
+		perms["DELETE_ALL_ATTACHMENTS"] = true
 		return perms
 	}
 
@@ -174,14 +178,27 @@ func registerTools(s *mcp.Server, c *jira.Client) {
 	}, ManageVersionsHandler(c))
 
 	// ─── Attachments ────────────────────────────────────────────────
+	attachActions := "'list', 'download'"
+	if perms["CREATE_ATTACHMENTS"] {
+		attachActions += ", 'upload'"
+	}
+	if perms["DELETE_ALL_ATTACHMENTS"] {
+		attachActions += ", 'delete'"
+	}
 	addTool(s, disabled, mcp.Tool{
 		Name:        "manage_attachments",
-		Description: "Manage Jira issue attachments. Actions: 'list', 'download'",
-	}, ManageAttachmentsHandler(c))
+		Description: fmt.Sprintf("Manage Jira issue attachments (list, download, upload, delete). Actions: %s", attachActions),
+	}, ManageAttachmentsHandler(c, perms))
 
 	// ─── Users ──────────────────────────────────────────────────────
 	addTool(s, disabled, mcp.Tool{
 		Name:        "manage_users",
 		Description: "Search and get Jira users. Actions: 'get_current', 'search', 'get'",
 	}, ManageUsersHandler(c))
+
+	// ─── Metrics ────────────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_metrics",
+		Description: "Get issue lifecycle metrics for dashboards and visualizations. Actions: 'get_dates' (raw date info, status transitions, time-in-status), 'get_metrics' (computed cycle time, lead time, time in current status, status breakdown)",
+	}, ManageMetricsHandler(c))
 }

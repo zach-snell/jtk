@@ -70,6 +70,12 @@ func (c *Client) DownloadAttachment(contentURL string) (data []byte, contentType
 	return data, filename, nil
 }
 
+// DeleteAttachment deletes an attachment by its ID.
+func (c *Client) DeleteAttachment(attachmentID string) error {
+	path := fmt.Sprintf("/attachment/%s", url.PathEscape(attachmentID))
+	return c.Delete(path)
+}
+
 // UploadAttachment uploads a file as an attachment to an issue.
 // Uses multipart/form-data with the X-Atlassian-Token: no-check header.
 func (c *Client) UploadAttachment(issueKey, filename string, content []byte) ([]Attachment, error) {
