@@ -10,7 +10,7 @@ import (
 
 type ManageSearchArgs struct {
 	Action     string `json:"action" jsonschema:"Action to perform: 'jql', 'quick'" jsonschema_enum:"jql,quick"`
-	JQL        string `json:"jql,omitempty" jsonschema:"JQL query string (for 'jql' action)"`
+	JQL        string `json:"jql,omitempty" jsonschema:"JQL query string (required for 'jql' action). Example: type=page AND space=DEV AND title~'architecture'. Common JQL patterns: 'project = PROJ AND status = \"In Progress\"', 'assignee = currentUser() ORDER BY updated DESC', 'labels = bug AND priority in (High, Highest)', 'sprint in openSprints()', 'created >= -7d AND type = Bug', 'text ~ \"search term\"', 'status changed TO Done AFTER -30d'"`
 	Text       string `json:"text,omitempty" jsonschema:"Search text (for 'quick' action)"`
 	ProjectKey string `json:"project_key,omitempty" jsonschema:"Optional project key to scope the search"`
 	StartAt    int    `json:"start_at,omitempty" jsonschema:"Pagination start index"`
