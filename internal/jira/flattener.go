@@ -179,6 +179,179 @@ func ADFToPlainText(adf interface{}) string {
 	}
 }
 
+// renderADFChildren renders all child nodes in a content array.
+func renderADFChildren(content []interface{}, sb *strings.Builder, depth int, listPrefix string) {
+	for _, child := range content {
+		if childNode, ok := child.(map[string]interface{}); ok {
+			renderADFNode(childNode, sb, depth, listPrefix)
+		}
+	}
+}
+
+// renderText renders a text node with optional marks (bold, italic, code, etc.).
+func renderText(node map[string]interface{}, sb *strings.Builder) {
+	text, _ := node["text"].(string)
+	if marks, ok := node["marks"].([]interface{}); ok && len(marks) > 0 {
+		text = applyMarks(text, marks)
+	}
+	sb.WriteString(text)
+}
+
+// applyMarks wraps text with markdown formatting based on ADF marks.
+func applyMarks(text string, marks []interface{}) string {
+	for _, mark := range marks {
+		if m, ok := mark.(map[string]interface{}); ok {
+			markType, _ := m["type"].(string)
+			switch markType {
+			case "strong":
+				text = "**" + text + "**"
+			case "em":
+				text = "*" + text + "*"
+			case "code":
+				text = "`" + text + "`"
+			case "strike":
+				text = "~~" + text + "~~"
+			case "underline":
+				text = "__" + text + "__"
+			}
+		}
+	}
+	return text
+}
+
+// renderHeading renders a heading node with the appropriate markdown level.
+func renderHeading(attrs map[string]interface{}, content []interface{}, sb *strings.Builder, depth int, listPrefix string) {
+	level := 1
+	if attrs != nil {
+		if lvl, ok := attrs["level"].(float64); ok {
+			level = int(lvl)
+		}
+	}
+	sb.WriteString(strings.Repeat("#", level) + " ")
+	renderADFChildren(content, sb, depth, listPrefix)
+	sb.WriteString("\n\n")
+}
+
+// renderBulletList renders a bullet list node.
+func renderBulletList(content []interface{}, sb *strings.Builder, depth int) {
+	for _, child := range content {
+		if childNode, ok := child.(map[string]interface{}); ok {
+			renderADFNode(childNode, sb, depth, "- ")
+		}
+	}
+}
+
+// renderOrderedList renders an ordered list node.
+func renderOrderedList(content []interface{}, sb *strings.Builder, depth int) {
+	for i, child := range content {
+		if childNode, ok := child.(map[string]interface{}); ok {
+			prefix := fmt.Sprintf("%d. ", i+1)
+			renderADFNode(childNode, sb, depth, prefix)
+		}
+	}
+}
+
+// renderListItem renders a list item node with proper indentation.
+func renderListItem(content []interface{}, sb *strings.Builder, depth int, listPrefix string) {
+	if listPrefix != "" {
+		sb.WriteString(strings.Repeat("  ", depth))
+		sb.WriteString(listPrefix)
+	}
+	for _, child := range content {
+		if childNode, ok := child.(map[string]interface{}); ok {
+			renderADFNode(childNode, sb, depth+1, "")
+		}
+	}
+}
+
+// renderCodeBlock renders a fenced code block with optional language.
+func renderCodeBlock(attrs map[string]interface{}, content []interface{}, sb *strings.Builder, depth int, listPrefix string) {
+	language := ""
+	if attrs != nil {
+		if lang, ok := attrs["language"].(string); ok {
+			language = lang
+		}
+	}
+	sb.WriteString("```" + language + "\n")
+	renderADFChildren(content, sb, depth, listPrefix)
+	sb.WriteString("```\n\n")
+}
+
+// renderBlockquote renders a blockquote by prefixing each line with "> ".
+func renderBlockquote(content []interface{}, sb *strings.Builder, depth int, listPrefix string) {
+	var innerSb strings.Builder
+	renderADFChildren(content, &innerSb, depth, listPrefix)
+	lines := strings.Split(strings.TrimSpace(innerSb.String()), "\n")
+	for _, line := range lines {
+		sb.WriteString("> " + line + "\n")
+	}
+	sb.WriteString("\n")
+}
+
+// renderTableRow renders a markdown table row.
+func renderTableRow(content []interface{}, sb *strings.Builder, depth int, listPrefix string) {
+	sb.WriteString("| ")
+	for _, child := range content {
+		if childNode, ok := child.(map[string]interface{}); ok {
+			renderADFNode(childNode, sb, depth, listPrefix)
+			sb.WriteString(" | ")
+		}
+	}
+	sb.WriteString("\n")
+}
+
+// renderMedia renders a media node with descriptive bracketed text.
+func renderMedia(attrs map[string]interface{}, sb *strings.Builder) {
+	if attrs == nil {
+		sb.WriteString("[Media/Image]")
+		return
+	}
+	mediaID, _ := attrs["id"].(string)
+	mediaType, _ := attrs["type"].(string)
+	alt, _ := attrs["alt"].(string)
+
+	switch {
+	case alt != "":
+		fmt.Fprintf(sb, "[Media: %s", alt)
+	case mediaType != "":
+		fmt.Fprintf(sb, "[Media: %s", mediaType)
+	default:
+		sb.WriteString("[Media")
+	}
+
+	if w, ok := attrs["width"].(float64); ok {
+		if h, ok := attrs["height"].(float64); ok {
+			fmt.Fprintf(sb, " (%dx%d)", int(w), int(h))
+		}
+	}
+
+	if mediaID != "" {
+		fmt.Fprintf(sb, " | id=%s", mediaID)
+	}
+	sb.WriteString("]")
+}
+
+// renderInlineNode renders mention, emoji, and inlineCard nodes.
+func renderInlineNode(nodeType string, attrs map[string]interface{}, sb *strings.Builder) {
+	if attrs == nil {
+		return
+	}
+	switch nodeType {
+	case "mention":
+		if text, ok := attrs["text"].(string); ok {
+			sb.WriteString("@" + text)
+		}
+	case "emoji":
+		if shortName, ok := attrs["shortName"].(string); ok {
+			sb.WriteString(shortName)
+		}
+	case "inlineCard":
+		if url, ok := attrs["url"].(string); ok {
+			sb.WriteString(url)
+		}
+	}
+}
+
 // renderADFNode recursively renders an ADF node to a string builder.
 func renderADFNode(node map[string]interface{}, sb *strings.Builder, depth int, listPrefix string) {
 	if node == nil {
@@ -191,207 +364,44 @@ func renderADFNode(node map[string]interface{}, sb *strings.Builder, depth int, 
 
 	switch nodeType {
 	case "doc":
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
-
+		renderADFChildren(content, sb, depth, listPrefix)
 	case "paragraph":
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
+		renderADFChildren(content, sb, depth, listPrefix)
 		sb.WriteString("\n\n")
-
 	case "text":
-		text, _ := node["text"].(string)
-		if marks, ok := node["marks"].([]interface{}); ok && len(marks) > 0 {
-			for _, mark := range marks {
-				if m, ok := mark.(map[string]interface{}); ok {
-					markType, _ := m["type"].(string)
-					switch markType {
-					case "strong":
-						text = "**" + text + "**"
-					case "em":
-						text = "*" + text + "*"
-					case "code":
-						text = "`" + text + "`"
-					case "strike":
-						text = "~~" + text + "~~"
-					case "underline":
-						text = "__" + text + "__"
-					}
-				}
-			}
-		}
-		sb.WriteString(text)
-
+		renderText(node, sb)
 	case "hardBreak":
 		sb.WriteString("\n")
-
 	case "heading":
-		level := 1
-		if attrs != nil {
-			if lvl, ok := attrs["level"].(float64); ok {
-				level = int(lvl)
-			}
-		}
-		sb.WriteString(strings.Repeat("#", level) + " ")
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
-		sb.WriteString("\n\n")
-
+		renderHeading(attrs, content, sb, depth, listPrefix)
 	case "bulletList":
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, "- ")
-			}
-		}
-
+		renderBulletList(content, sb, depth)
 	case "orderedList":
-		for i, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				prefix := fmt.Sprintf("%d. ", i+1)
-				renderADFNode(childNode, sb, depth, prefix)
-			}
-		}
-
+		renderOrderedList(content, sb, depth)
 	case "listItem":
-		if listPrefix != "" {
-			sb.WriteString(strings.Repeat("  ", depth))
-			sb.WriteString(listPrefix)
-		}
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth+1, "")
-			}
-		}
-
+		renderListItem(content, sb, depth, listPrefix)
 	case "codeBlock":
-		language := ""
-		if attrs != nil {
-			if lang, ok := attrs["language"].(string); ok {
-				language = lang
-			}
-		}
-		sb.WriteString("```" + language + "\n")
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
-		sb.WriteString("```\n\n")
-
+		renderCodeBlock(attrs, content, sb, depth, listPrefix)
 	case "blockquote":
-		var innerSb strings.Builder
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, &innerSb, depth, listPrefix)
-			}
-		}
-		lines := strings.Split(strings.TrimSpace(innerSb.String()), "\n")
-		for _, line := range lines {
-			sb.WriteString("> " + line + "\n")
-		}
-		sb.WriteString("\n")
-
+		renderBlockquote(content, sb, depth, listPrefix)
 	case "rule":
 		sb.WriteString("---\n\n")
-
 	case "table":
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
+		renderADFChildren(content, sb, depth, listPrefix)
 		sb.WriteString("\n")
-
 	case "tableRow":
-		sb.WriteString("| ")
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-				sb.WriteString(" | ")
-			}
-		}
-		sb.WriteString("\n")
-
+		renderTableRow(content, sb, depth, listPrefix)
 	case "tableHeader", "tableCell":
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
-
+		renderADFChildren(content, sb, depth, listPrefix)
 	case "mediaSingle", "mediaGroup":
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
-
+		renderADFChildren(content, sb, depth, listPrefix)
 	case "media":
-		if attrs == nil {
-			sb.WriteString("[Media/Image]")
-			break
-		}
-		mediaID, _ := attrs["id"].(string)
-		mediaType, _ := attrs["type"].(string)
-		alt, _ := attrs["alt"].(string)
-
-		switch {
-		case alt != "":
-			fmt.Fprintf(sb, "[Media: %s", alt)
-		case mediaType != "":
-			fmt.Fprintf(sb, "[Media: %s", mediaType)
-		default:
-			sb.WriteString("[Media")
-		}
-
-		if w, ok := attrs["width"].(float64); ok {
-			if h, ok := attrs["height"].(float64); ok {
-				fmt.Fprintf(sb, " (%dx%d)", int(w), int(h))
-			}
-		}
-
-		if mediaID != "" {
-			fmt.Fprintf(sb, " | id=%s", mediaID)
-		}
-		sb.WriteString("]")
-
-	case "mention":
-		if attrs != nil {
-			if text, ok := attrs["text"].(string); ok {
-				sb.WriteString("@" + text)
-			}
-		}
-
-	case "emoji":
-		if attrs != nil {
-			if shortName, ok := attrs["shortName"].(string); ok {
-				sb.WriteString(shortName)
-			}
-		}
-
-	case "inlineCard":
-		if attrs != nil {
-			if url, ok := attrs["url"].(string); ok {
-				sb.WriteString(url)
-			}
-		}
-
+		renderMedia(attrs, sb)
+	case "mention", "emoji", "inlineCard":
+		renderInlineNode(nodeType, attrs, sb)
 	default:
 		// Unknown node type — try to render children
-		for _, child := range content {
-			if childNode, ok := child.(map[string]interface{}); ok {
-				renderADFNode(childNode, sb, depth, listPrefix)
-			}
-		}
+		renderADFChildren(content, sb, depth, listPrefix)
 	}
 }
 
