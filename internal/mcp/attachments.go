@@ -78,7 +78,7 @@ func ManageAttachmentsHandler(c *jira.Client) func(context.Context, *mcp.CallToo
 				return ToolResultError(fmt.Sprintf("failed to create download directory: %v", err)), nil, nil
 			}
 			savePath := filepath.Join(downloadDir, attachment.Filename)
-			if err := os.WriteFile(savePath, content, 0o644); err != nil {
+			if err := os.WriteFile(savePath, content, 0o600); err != nil {
 				return ToolResultError(fmt.Sprintf("failed to save attachment: %v", err)), nil, nil
 			}
 

@@ -417,7 +417,7 @@ func SafeJSON(data interface{}, maxChars int) string {
 	_ = os.MkdirAll(dir, 0o755)
 	filename := fmt.Sprintf("response-%d.json", time.Now().UnixNano())
 	path := filepath.Join(dir, filename)
-	_ = os.WriteFile(path, out, 0o644)
+	_ = os.WriteFile(path, out, 0o600)
 
 	// Truncate at a newline boundary
 	truncated := string(out[:maxChars])

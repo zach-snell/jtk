@@ -56,7 +56,7 @@ func (c *Client) ListSprints(boardID int, state string, startAt, maxResults int)
 }
 
 // GetSprintIssues returns issues in a sprint.
-func (c *Client) GetSprintIssues(sprintID int, startAt, maxResults int) (*SearchResult, error) {
+func (c *Client) GetSprintIssues(sprintID, startAt, maxResults int) (*SearchResult, error) {
 	params := url.Values{}
 	if startAt > 0 {
 		params.Set("startAt", fmt.Sprintf("%d", startAt))
@@ -74,7 +74,7 @@ func (c *Client) GetSprintIssues(sprintID int, startAt, maxResults int) (*Search
 }
 
 // GetBoardBacklog returns issues in the backlog of a board.
-func (c *Client) GetBoardBacklog(boardID int, startAt, maxResults int) (*SearchResult, error) {
+func (c *Client) GetBoardBacklog(boardID, startAt, maxResults int) (*SearchResult, error) {
 	params := url.Values{}
 	if startAt > 0 {
 		params.Set("startAt", fmt.Sprintf("%d", startAt))
@@ -124,9 +124,9 @@ func (c *Client) SearchSprintByName(boardID int, name string) ([]Sprint, error) 
 	// Filter by name
 	nameLower := strings.ToLower(name)
 	var matched []Sprint
-	for _, sp := range allSprints {
-		if strings.Contains(strings.ToLower(sp.Name), nameLower) {
-			matched = append(matched, sp)
+	for i := range allSprints {
+		if strings.Contains(strings.ToLower(allSprints[i].Name), nameLower) {
+			matched = append(matched, allSprints[i])
 		}
 	}
 	return matched, nil

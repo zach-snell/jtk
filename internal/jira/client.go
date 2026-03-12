@@ -24,7 +24,6 @@ type Client struct {
 	tokenType TokenType
 
 	rateLimiter *RateLimiter
-	mu          sync.Mutex
 }
 
 // RateLimiter implements a token bucket rate limiter.

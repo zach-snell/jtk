@@ -69,7 +69,7 @@ func ProbeTokenType(domain, email, token string) (TokenType, string, error) {
 
 	// 1. Try classic: Basic Auth against direct site URL
 	classicURL := fmt.Sprintf("https://%s.atlassian.net/rest/api/3/myself", domain)
-	req, err := http.NewRequest(http.MethodGet, classicURL, nil)
+	req, err := http.NewRequest(http.MethodGet, classicURL, http.NoBody)
 	if err != nil {
 		return "", "", fmt.Errorf("creating probe request: %w", err)
 	}
@@ -96,7 +96,7 @@ func ProbeTokenType(domain, email, token string) (TokenType, string, error) {
 	}
 
 	gatewayURL := fmt.Sprintf("https://api.atlassian.com/ex/jira/%s/rest/api/3/myself", cloudID)
-	req, err = http.NewRequest(http.MethodGet, gatewayURL, nil)
+	req, err = http.NewRequest(http.MethodGet, gatewayURL, http.NoBody)
 	if err != nil {
 		return "", "", fmt.Errorf("creating gateway probe request: %w", err)
 	}
@@ -161,7 +161,7 @@ func LoadCredentials() (*Credentials, error) {
 			Domain:   domain,
 			Email:    email,
 			APIToken: token,
-			Type:     TokenType(os.Getenv("JIRA_TOKEN_TYPE")), // empty = auto-detect
+			Type:     TokenType(os.Getenv("JIRA_TOKEN_TYPE")), // auto-detected if empty
 			CloudID:  os.Getenv("JIRA_CLOUD_ID"),
 		}
 		return creds, nil

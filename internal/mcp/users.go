@@ -48,12 +48,12 @@ func ManageUsersHandler(c *jira.Client) func(context.Context, *mcp.CallToolReque
 				Total int        `json:"total"`
 				Users []flatUser `json:"users"`
 			}{Total: len(users)}
-			for _, u := range users {
+			for i := range users {
 				flat.Users = append(flat.Users, flatUser{
-					AccountID:   u.AccountID,
-					DisplayName: u.DisplayName,
-					Email:       u.EmailAddress,
-					Active:      u.Active,
+					AccountID:   users[i].AccountID,
+					DisplayName: users[i].DisplayName,
+					Email:       users[i].EmailAddress,
+					Active:      users[i].Active,
 				})
 			}
 			return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil

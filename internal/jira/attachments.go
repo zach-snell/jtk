@@ -37,7 +37,7 @@ func (c *Client) GetAttachment(attachmentID string) (*Attachment, error) {
 
 // DownloadAttachment downloads an attachment's content from its absolute content URL.
 // Returns the raw bytes, the filename, and any error.
-func (c *Client) DownloadAttachment(contentURL string) ([]byte, string, error) {
+func (c *Client) DownloadAttachment(contentURL string) (data []byte, contentType string, err error) {
 	// First get the attachment metadata to know the filename
 	resp, err := c.GetAbsolute(contentURL)
 	if err != nil {
@@ -50,7 +50,7 @@ func (c *Client) DownloadAttachment(contentURL string) ([]byte, string, error) {
 		return nil, "", fmt.Errorf("download failed (HTTP %d): %s", resp.StatusCode, string(body))
 	}
 
-	data, err := io.ReadAll(resp.Body)
+	data, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, "", fmt.Errorf("reading attachment body: %w", err)
 	}
@@ -72,7 +72,7 @@ func (c *Client) DownloadAttachment(contentURL string) ([]byte, string, error) {
 
 // UploadAttachment uploads a file as an attachment to an issue.
 // Uses multipart/form-data with the X-Atlassian-Token: no-check header.
-func (c *Client) UploadAttachment(issueKey string, filename string, content []byte) ([]Attachment, error) {
+func (c *Client) UploadAttachment(issueKey, filename string, content []byte) ([]Attachment, error) {
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
 
