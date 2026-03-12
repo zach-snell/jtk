@@ -106,11 +106,35 @@ jtk mcp --port 8080
 | `JIRA_API_TOKEN` | An Atlassian API Token | Yes |
 | `JIRA_DISABLED_TOOLS` | Comma-separated tool names to hide from AI agents | No |
 
+### API Token Scopes
+
+Create a **Jira** app token at [id.atlassian.com](https://id.atlassian.com/manage-profile/security/api-tokens) with granular scopes. Run `jtk auth` to see the full recommended scope list, or use these:
+
+**Read-only (18 scopes):**
+```
+read:me, read:jql:jira, read:issue-details:jira, read:issue-type:jira,
+read:issue-link:jira, read:issue-worklog:jira, read:issue.changelog:jira,
+read:issue.transition:jira, read:comment:jira, read:attachment:jira,
+read:project:jira, read:project-version:jira, read:status:jira,
+read:user:jira, read:permission:jira, read:board-scope:jira-software,
+read:sprint:jira-software, read:dev-info:jira
+```
+
+**Full access (add these 7):**
+```
+write:issue:jira, write:comment:jira, write:issue-worklog:jira,
+write:issue-link:jira, write:attachment:jira, write:sprint:jira-software,
+delete:issue:jira
+```
+
 ### Permission Introspection & Security
 
-**Dynamic Tool Registration:** The `jtk mcp` server queries your Jira token's permissions at startup via `/mypermissions`. If your token lacks `CREATE_ISSUES`, all issue creation actions are hidden from the AI agent. Same for `DELETE_ISSUES`, `TRANSITION_ISSUES`, `LINK_ISSUES`, etc.
+**Two-layer safety model:**
 
-**Explicit Tool Denial:** Even if your token has full permissions, you can explicitly deny the AI agent access to any tool:
+1. **Token scopes** — granular Atlassian scopes control which APIs the token can call at all (403 if missing)
+2. **Jira permissions** — jtk queries `/mypermissions` at MCP startup and dynamically hides mutation tools your account lacks (e.g., no `CREATE_ISSUES` → no create action)
+
+**Explicit Tool Denial:** Even with full scopes and permissions, you can explicitly deny the AI agent access to any tool:
 
 ```bash
 export JIRA_DISABLED_TOOLS="manage_boards,manage_worklogs"

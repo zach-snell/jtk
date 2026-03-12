@@ -99,6 +99,39 @@ func RemoveCredentials() error {
 	return nil
 }
 
+// ScopeReadOnly contains the granular scopes required for read-only access.
+var ScopeReadOnly = []string{
+	"read:me",
+	"read:jql:jira",
+	"read:issue-details:jira",
+	"read:issue-type:jira",
+	"read:issue-link:jira",
+	"read:issue-worklog:jira",
+	"read:issue.changelog:jira",
+	"read:issue.transition:jira",
+	"read:comment:jira",
+	"read:attachment:jira",
+	"read:project:jira",
+	"read:project-version:jira",
+	"read:status:jira",
+	"read:user:jira",
+	"read:permission:jira",
+	"read:board-scope:jira-software",
+	"read:sprint:jira-software",
+	"read:dev-info:jira",
+}
+
+// ScopeWrite contains the additional granular scopes for write operations.
+var ScopeWrite = []string{
+	"write:issue:jira",
+	"write:comment:jira",
+	"write:issue-worklog:jira",
+	"write:issue-link:jira",
+	"write:attachment:jira",
+	"write:sprint:jira-software",
+	"delete:issue:jira",
+}
+
 // InteractiveLogin prompts the user for Jira credentials and stores them.
 func InteractiveLogin() error {
 	reader := bufio.NewReader(os.Stdin)
@@ -109,6 +142,22 @@ func InteractiveLogin() error {
 	fmt.Println()
 	fmt.Println("Create an API Token at:")
 	fmt.Println("  https://id.atlassian.com/manage-profile/security/api-tokens")
+	fmt.Println()
+	fmt.Println("Select \"Jira\" as the app, then add these scopes:")
+	fmt.Println()
+	fmt.Println("  Read-only (18 scopes):")
+	for _, s := range ScopeReadOnly {
+		fmt.Printf("    %s\n", s)
+	}
+	fmt.Println()
+	fmt.Println("  Write access (add these 7 for full access):")
+	for _, s := range ScopeWrite {
+		fmt.Printf("    %s\n", s)
+	}
+	fmt.Println()
+	fmt.Println("Mutation tools are dynamically hidden if your token lacks write scopes.")
+	fmt.Println("To explicitly deny tools despite having full scopes, use:")
+	fmt.Println("  export JIRA_DISABLED_TOOLS=\"manage_boards,manage_worklogs\"")
 	fmt.Println()
 
 	fmt.Print("Jira domain (e.g., 'mycompany' for mycompany.atlassian.net): ")

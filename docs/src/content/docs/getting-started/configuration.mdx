@@ -15,13 +15,53 @@ jtk supports two authentication methods: interactive login and environment varia
 jtk auth
 ```
 
-You will be prompted for:
-
-1. **Jira domain** — e.g., `mycompany` (for `mycompany.atlassian.net`)
-2. **Email address** — your Atlassian account email
-3. **API token** — from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+You will be prompted for your Jira domain, email, and API token. The command also prints the exact granular scopes to select when creating your token.
 
 Credentials are saved to `~/.config/jtk/credentials.json` with restricted file permissions.
+
+### API Token Scopes
+
+Create a **Jira** app token at [id.atlassian.com](https://id.atlassian.com/manage-profile/security/api-tokens). Select "Jira" as the app, then add granular scopes.
+
+<Tabs>
+<TabItem label="Read-only (18 scopes)">
+```
+read:me
+read:jql:jira
+read:issue-details:jira
+read:issue-type:jira
+read:issue-link:jira
+read:issue-worklog:jira
+read:issue.changelog:jira
+read:issue.transition:jira
+read:comment:jira
+read:attachment:jira
+read:project:jira
+read:project-version:jira
+read:status:jira
+read:user:jira
+read:permission:jira
+read:board-scope:jira-software
+read:sprint:jira-software
+read:dev-info:jira
+```
+</TabItem>
+<TabItem label="Full access (add 7 more)">
+```
+write:issue:jira
+write:comment:jira
+write:issue-worklog:jira
+write:issue-link:jira
+write:attachment:jira
+write:sprint:jira-software
+delete:issue:jira
+```
+</TabItem>
+</Tabs>
+
+<Aside type="tip">
+jtk provides a **two-layer safety model**: token scopes control API access (403 if missing), and `/mypermissions` introspection dynamically hides mutation tools your Jira account lacks.
+</Aside>
 
 Check your auth status:
 

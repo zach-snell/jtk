@@ -35,35 +35,43 @@ Environment variables take priority over stored credentials.
 Never commit credentials to version control. Add `credentials.json` to your `.gitignore`.
 </Aside>
 
-## API Token Permissions
+## Two-Layer Safety Model
 
-jtk uses Jira Cloud's API token authentication (Basic Auth with email + API token). The token inherits the permissions of the associated Atlassian account.
+jtk provides defense-in-depth for AI agent access through two independent security layers.
 
-Create tokens at: https://id.atlassian.com/manage-profile/security/api-tokens
+### Layer 1: Token Scopes
 
-### Principle of Least Privilege
+jtk uses Atlassian's granular API token scopes. Create a **Jira** app token at [id.atlassian.com](https://id.atlassian.com/manage-profile/security/api-tokens) and select only the scopes you need.
 
-For MCP server usage, consider creating a dedicated Jira account with only the permissions your AI agent needs:
+Run `jtk auth` to see the full recommended scope list, or refer to the [Configuration guide](/getting-started/configuration/).
 
-- **Read-only use** — grant only `BROWSE_PROJECTS` permission
-- **Standard use** — add `CREATE_ISSUES`, `ADD_COMMENTS`, `TRANSITION_ISSUES`
-- **Full access** — add `EDIT_ISSUES`, `ASSIGN_ISSUES`, `DELETE_ISSUES`, `LINK_ISSUES`
+**Read-only (18 scopes):** Issues, comments, attachments, worklogs, projects, versions, boards, sprints, dev-status, users, JQL, and permission introspection.
 
-jtk's dynamic permission introspection ensures only permitted actions are exposed.
+**Full access (add 7 write scopes):** Create/update/delete issues, comments, worklogs, issue links, attachments, and sprints.
 
-## Permission-Aware Tool Registration
+If a scope is missing, the Jira API returns 403 — the operation is blocked at the API level before jtk even processes the response.
 
-On startup, the MCP server checks your token's permissions via:
+### Layer 2: Permission Introspection
+
+On startup, the MCP server checks your Jira account's project-level permissions via:
 
 ```
 GET /rest/api/3/mypermissions
 ```
 
-Write actions are only included in tool descriptions if the token has the corresponding permission. This prevents:
+Write actions are only included in tool descriptions if the account has the corresponding Jira permission (`CREATE_ISSUES`, `DELETE_ISSUES`, `TRANSITION_ISSUES`, etc.). This prevents:
 
 - AI agents attempting operations that would fail
 - Wasted API calls and tokens
 - Confusing error messages
+
+### Principle of Least Privilege
+
+For MCP server usage, combine both layers:
+
+1. **Token scopes** — select only the granular scopes you need (read-only is safest)
+2. **Jira permissions** — use a dedicated account with limited project roles if needed
+3. **Tool disabling** — explicitly deny tools via `JIRA_DISABLED_TOOLS`
 
 ## Data Flow
 
