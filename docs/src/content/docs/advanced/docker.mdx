@@ -1,0 +1,164 @@
+---
+title: Docker Deployment
+description: Deploy jtk with Docker — Dockerfile, Compose, and Kubernetes examples.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+jtk is a single static Go binary, making it trivial to containerize.
+
+## Dockerfile
+
+```dockerfile
+FROM golang:1.24-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /jtk ./cmd/jtk
+
+FROM alpine:3.21
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /jtk /usr/local/bin/jtk
+ENTRYPOINT ["jtk"]
+CMD ["mcp"]
+```
+
+Build and run:
+
+```bash
+docker build -t jtk .
+docker run -i --rm \
+  -e JIRA_DOMAIN=mycompany \
+  -e JIRA_EMAIL=jane@example.com \
+  -e JIRA_API_TOKEN=your-api-token \
+  jtk
+```
+
+## Docker Compose
+
+### stdio mode (for local MCP clients)
+
+```yaml
+services:
+  jtk:
+    build: .
+    stdin_open: true
+    environment:
+      - JIRA_DOMAIN=mycompany
+      - JIRA_EMAIL=jane@example.com
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+```
+
+### HTTP Streamable mode (for remote access)
+
+```yaml
+services:
+  jtk:
+    build: .
+    command: ["mcp", "--port", "8080"]
+    ports:
+      - "8080:8080"
+    environment:
+      - JIRA_DOMAIN=mycompany
+      - JIRA_EMAIL=jane@example.com
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+    restart: unless-stopped
+```
+
+### With environment file
+
+Create a `.env` file:
+
+```bash
+# .env
+JIRA_DOMAIN=mycompany
+JIRA_EMAIL=jane@example.com
+JIRA_API_TOKEN=your-api-token
+JIRA_TOKEN_TYPE=classic
+```
+
+```yaml
+services:
+  jtk:
+    build: .
+    command: ["mcp", "--port", "8080"]
+    ports:
+      - "8080:8080"
+    env_file: .env
+    restart: unless-stopped
+```
+
+<Aside type="caution">
+Never commit `.env` files to version control. Add `.env` to your `.gitignore`.
+</Aside>
+
+## Kubernetes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jtk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jtk
+  template:
+    metadata:
+      labels:
+        app: jtk
+    spec:
+      containers:
+      - name: jtk
+        image: jtk:latest
+        args: ["mcp", "--port", "8080"]
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: jira-credentials
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jtk
+spec:
+  selector:
+    app: jtk
+  ports:
+  - port: 8080
+    targetPort: 8080
+```
+
+Create the secret:
+
+```bash
+kubectl create secret generic jira-credentials \
+  --from-literal=JIRA_DOMAIN=mycompany \
+  --from-literal=JIRA_EMAIL=jane@example.com \
+  --from-literal=JIRA_API_TOKEN=your-api-token
+```
+
+<Aside type="tip">
+jtk is a single static binary (~15MB). The Alpine-based Docker image is under 30MB, starts instantly, and uses minimal memory. No runtime dependencies.
+</Aside>
+
+## Disabling Tools in Production
+
+Restrict available tools for security:
+
+```yaml
+environment:
+  - JIRA_DISABLED_TOOLS=manage_worklogs,manage_attachments
+```
+
+Or use a read-only token that only has `BROWSE_PROJECTS` permission — jtk's permission introspection will automatically hide all write actions.

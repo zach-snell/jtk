@@ -47,10 +47,10 @@ manage_issues
   └─ list_types
 ```
 
-This reduces the tool count from ~40 to 10, which is important because:
+This reduces the tool count from ~40 to 11, which is important because:
 
 1. **Token efficiency** — fewer tools means less token overhead in the system prompt
-2. **Model comprehension** — AI models handle 10 tools better than 40
+2. **Model comprehension** — AI models handle 11 tools better than 40
 3. **Logical grouping** — related actions are naturally co-located
 
 Each multiplexed handler is implemented as a Go generic function:

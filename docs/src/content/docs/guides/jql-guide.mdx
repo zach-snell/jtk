@@ -1,0 +1,181 @@
+---
+title: JQL Guide
+description: Master Jira Query Language for powerful issue searches with jtk.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+JQL (Jira Query Language) is used by `manage_search` to find issues. This guide covers the most useful patterns for both CLI and MCP usage.
+
+## Basic Syntax
+
+JQL queries follow the pattern: `field operator value`
+
+```
+project = "PROJ" AND status = "In Progress"
+```
+
+Use `AND`, `OR`, and `NOT` to combine conditions, and `ORDER BY` for sorting.
+
+## Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `=` | Exact match | `status = "Done"` |
+| `!=` | Not equal | `status != "Closed"` |
+| `~` | Contains text | `summary ~ "bug fix"` |
+| `!~` | Does not contain | `summary !~ "test"` |
+| `IN` | Match any in list | `status IN ("Open", "In Progress")` |
+| `NOT IN` | Not in list | `priority NOT IN ("Low", "Lowest")` |
+| `IS EMPTY` | Null / unset | `assignee IS EMPTY` |
+| `IS NOT EMPTY` | Not null | `assignee IS NOT EMPTY` |
+| `>`, `<`, `>=`, `<=` | Comparison | `created >= "2025-01-01"` |
+
+## Common Fields
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `project` | Project key | `project = "PROJ"` |
+| `status` | Issue status | `status = "In Progress"` |
+| `assignee` | Assigned user | `assignee = currentUser()` |
+| `reporter` | Issue creator | `reporter = "jane@example.com"` |
+| `priority` | Priority level | `priority = "High"` |
+| `type` / `issuetype` | Issue type | `type = "Bug"` |
+| `labels` | Issue labels | `labels = "frontend"` |
+| `components` | Issue components | `component = "API"` |
+| `fixVersion` | Fix version | `fixVersion = "v2.0.0"` |
+| `sprint` | Sprint name | `sprint = "Sprint 42"` |
+| `sprint in openSprints()` | Active sprints | `sprint in openSprints()` |
+| `created` | Creation date | `created >= "-7d"` |
+| `updated` | Last modified | `updated >= "-24h"` |
+| `resolved` | Resolution date | `resolved >= startOfMonth()` |
+| `due` | Due date | `due <= endOfWeek()` |
+| `resolution` | Resolution type | `resolution = EMPTY` (unresolved) |
+| `text` | Full-text search | `text ~ "database migration"` |
+
+## Date Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `currentUser()` | Logged-in user | `assignee = currentUser()` |
+| `startOfDay()` | Start of today | `created >= startOfDay()` |
+| `startOfWeek()` | Start of this week | `updated >= startOfWeek()` |
+| `startOfMonth()` | Start of this month | `resolved >= startOfMonth()` |
+| `endOfDay()` | End of today | `due <= endOfDay()` |
+| `endOfWeek()` | End of this week | `due <= endOfWeek()` |
+| `now()` | Current timestamp | `updated >= "-1h"` |
+
+## Relative Dates
+
+Use relative date syntax for reusable queries:
+
+| Syntax | Meaning |
+|--------|---------|
+| `"-1h"` | 1 hour ago |
+| `"-7d"` | 7 days ago |
+| `"-2w"` | 2 weeks ago |
+| `"-1M"` | 1 month ago |
+
+## Practical Patterns
+
+### My open issues (prioritized)
+
+```
+assignee = currentUser() AND resolution = EMPTY ORDER BY priority DESC
+```
+
+### Sprint burndown
+
+```
+sprint in openSprints() AND project = "PROJ" ORDER BY rank ASC
+```
+
+### Recent bugs
+
+```
+type = Bug AND created >= "-7d" ORDER BY created DESC
+```
+
+### Unassigned high-priority items
+
+```
+assignee IS EMPTY AND priority IN ("High", "Highest") AND resolution = EMPTY ORDER BY created ASC
+```
+
+### Issues updated today
+
+```
+updated >= startOfDay() AND project = "PROJ" ORDER BY updated DESC
+```
+
+### Overdue issues
+
+```
+due < now() AND resolution = EMPTY ORDER BY due ASC
+```
+
+### Cross-project search
+
+```
+project IN ("PROJ", "DEVOPS", "INFRA") AND status = "In Progress" ORDER BY updated DESC
+```
+
+### Full-text search
+
+```
+text ~ "database migration" ORDER BY relevance DESC
+```
+
+### Issues resolved this sprint
+
+```
+sprint in openSprints() AND status = Done ORDER BY resolutiondate DESC
+```
+
+### Issues with no fix version
+
+```
+project = "PROJ" AND fixVersion IS EMPTY AND resolution = EMPTY ORDER BY priority DESC
+```
+
+### Bugs by component
+
+```
+project = "PROJ" AND type = Bug AND component = "API" ORDER BY priority DESC
+```
+
+### Recently transitioned to Done
+
+```
+status changed TO "Done" AFTER "-7d" ORDER BY updated DESC
+```
+
+## Using JQL with jtk
+
+### CLI
+
+```bash
+jtk issues search 'assignee = currentUser() AND status != Done ORDER BY priority DESC'
+```
+
+### MCP
+
+```json
+{
+  "action": "jql",
+  "jql": "project = PROJ AND sprint in openSprints() ORDER BY rank ASC",
+  "max_results": 50
+}
+```
+
+<Aside type="tip">
+Always include `ORDER BY` in your queries for deterministic, predictable results. Without it, the order may vary between API calls.
+</Aside>
+
+<Aside type="tip">
+Use relative dates (`"-7d"`, `"-2w"`, `"-1M"`) instead of absolute dates for reusable queries that stay relevant over time.
+</Aside>
+
+<Aside type="note">
+JQL is case-insensitive for operators and field names, but values are case-sensitive for exact matches. Use `~` for case-insensitive text search.
+</Aside>

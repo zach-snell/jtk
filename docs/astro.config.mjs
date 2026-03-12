@@ -81,6 +81,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Usage Examples', slug: 'guides/examples' },
 						{ label: 'Git Integration', slug: 'guides/git-integration' },
+						{ label: 'JQL Guide', slug: 'guides/jql-guide' },
 					],
 				},
 				{
@@ -88,6 +89,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Architecture', slug: 'advanced/architecture' },
 						{ label: 'Security', slug: 'advanced/security' },
+						{ label: 'Docker Deployment', slug: 'advanced/docker' },
 						{ label: 'Development', slug: 'advanced/development' },
 					],
 				},

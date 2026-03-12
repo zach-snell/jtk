@@ -55,12 +55,12 @@ jtk is purpose-built for developers who:
                            │
 ┌─────────────┐     ┌──────┴───────┐
 │  AI Agent   │────▶│   MCP Mode   │
-│  (Claude)   │     │  10 tools    │
+│  (Claude)   │     │  11 tools    │
 └─────────────┘     └──────────────┘
 ```
 
 Both modes share the same `jira.Client` underneath. The MCP tools use a multiplexed pattern — each tool handles multiple actions via an `action` parameter, reducing tool count while maintaining full coverage.
 
 <Aside type="tip">
-jtk's MCP tools use an action-based multiplexing pattern. Instead of registering 40+ individual tools, jtk groups related operations into 10 tools (e.g., `manage_issues` handles `get`, `create`, `update`, `transition`, etc.). This keeps the tool list manageable for AI agents.
+jtk's MCP tools use an action-based multiplexing pattern. Instead of registering 40+ individual tools, jtk groups related operations into 11 tools (e.g., `manage_issues` handles `get`, `create`, `update`, `transition`, etc.). This keeps the tool list manageable for AI agents.
 </Aside>
