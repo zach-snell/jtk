@@ -3,6 +3,7 @@ package jira
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -103,24 +104,26 @@ func BuildUpdateIssueRequest(summary, description, priority, assigneeID string, 
 	return &UpdateIssueRequest{Fields: fields}
 }
 
-// buildADFParagraph wraps plain text in ADF paragraph format.
+// urlPattern matches http/https URLs in text.
+var urlPattern = regexp.MustCompile(`https?://[^\s<>"{}|\\^\x60]+`)
+
+// buildADFParagraph wraps plain text in ADF document format.
+// Handles literal \n sequences, actual newlines, and auto-links URLs.
 func buildADFParagraph(text string) map[string]interface{} {
-	// Split by newlines to create multiple paragraphs
+	// Normalize literal \n sequences to real newlines
+	text = strings.ReplaceAll(text, `\n`, "\n")
+
 	paragraphs := strings.Split(text, "\n")
 	content := make([]interface{}, 0, len(paragraphs))
 
 	for _, p := range paragraphs {
+		p = strings.TrimSpace(p)
 		if p == "" {
 			continue
 		}
 		content = append(content, map[string]interface{}{
-			"type": "paragraph",
-			"content": []interface{}{
-				map[string]interface{}{
-					"type": "text",
-					"text": p,
-				},
-			},
+			"type":    "paragraph",
+			"content": buildADFInlineContent(p),
 		})
 	}
 
@@ -128,5 +131,48 @@ func buildADFParagraph(text string) map[string]interface{} {
 		"type":    "doc",
 		"version": 1,
 		"content": content,
+	}
+}
+
+// buildADFInlineContent splits a line into text and link nodes.
+func buildADFInlineContent(line string) []interface{} {
+	matches := urlPattern.FindAllStringIndex(line, -1)
+	if len(matches) == 0 {
+		return []interface{}{adfText(line)}
+	}
+
+	var nodes []interface{}
+	cursor := 0
+	for _, m := range matches {
+		// Text before the URL
+		if m[0] > cursor {
+			nodes = append(nodes, adfText(line[cursor:m[0]]))
+		}
+		// The URL as a clickable link
+		u := line[m[0]:m[1]]
+		nodes = append(nodes, adfLink(u))
+		cursor = m[1]
+	}
+	// Trailing text after last URL
+	if cursor < len(line) {
+		nodes = append(nodes, adfText(line[cursor:]))
+	}
+	return nodes
+}
+
+func adfText(t string) map[string]interface{} {
+	return map[string]interface{}{"type": "text", "text": t}
+}
+
+func adfLink(u string) map[string]interface{} {
+	return map[string]interface{}{
+		"type": "text",
+		"text": u,
+		"marks": []interface{}{
+			map[string]interface{}{
+				"type":  "link",
+				"attrs": map[string]interface{}{"href": u},
+			},
+		},
 	}
 }
