@@ -10,7 +10,7 @@ import (
 )
 
 type ManageIssuesArgs struct {
-	Action      string `json:"action" jsonschema:"Action to perform: 'get', 'create', 'update', 'assign', 'transition', 'add_comment', 'list_comments', 'delete', 'link', 'get_links', 'get_history', 'list_types'" jsonschema_enum:"get,create,update,assign,transition,add_comment,list_comments,delete,link,get_links,get_history,list_types"`
+	Action      string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher"`
 	IssueKey    string `json:"issue_key,omitempty" jsonschema:"Jira issue key (e.g., PROJ-123). Required for most actions"`
 	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project key (for 'create', 'list_types')"`
 	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project ID (for 'list_types' — use project_key or project_id)"`
@@ -21,8 +21,12 @@ type ManageIssuesArgs struct {
 	AssigneeID  string `json:"assignee_id,omitempty" jsonschema:"Assignee account ID (for 'create', 'update', 'assign'). Use 'unassigned' to remove"`
 	ParentKey   string `json:"parent_key,omitempty" jsonschema:"Parent issue key (for 'create')"`
 	Labels      string `json:"labels,omitempty" jsonschema:"Comma-separated labels (for 'create', 'update')"`
+	Components  string `json:"components,omitempty" jsonschema:"Comma-separated component names (for 'create', 'update')"`
+	FixVersions string `json:"fix_versions,omitempty" jsonschema:"Comma-separated fix version names (for 'create', 'update')"`
+	DueDate     string `json:"due_date,omitempty" jsonschema:"Due date in YYYY-MM-DD format (for 'create', 'update')"`
 	Transition  string `json:"transition,omitempty" jsonschema:"Target transition name (for 'transition'), e.g. 'In Progress', 'Done'"`
-	Comment     string `json:"comment,omitempty" jsonschema:"Comment body in markdown (for 'add_comment', 'link'). Supports: **bold**, *italic*, ~~strikethrough~~, [links](url), - lists, > blockquotes, and fenced code blocks. URLs are auto-linked."`
+	Comment     string `json:"comment,omitempty" jsonschema:"Comment body in markdown (for 'add_comment', 'edit_comment', 'link'). Supports: **bold**, *italic*, ~~strikethrough~~, [links](url), - lists, > blockquotes, and fenced code blocks. URLs are auto-linked."`
+	CommentID   string `json:"comment_id,omitempty" jsonschema:"Comment ID (required for 'edit_comment')"`
 	LinkType    string `json:"link_type,omitempty" jsonschema:"Link type name (for 'link'), e.g. 'Blocks', 'Duplicate', 'Relates'"`
 	InwardKey   string `json:"inward_key,omitempty" jsonschema:"Inward issue key (for 'link') — the issue that IS affected"`
 	OutwardKey  string `json:"outward_key,omitempty" jsonschema:"Outward issue key (for 'link') — the issue that CAUSES the effect"`
@@ -46,20 +50,30 @@ func ManageIssuesHandler(c *jira.Client, perms map[string]bool) func(context.Con
 			return handleTransitionIssue(c, perms, args)
 		case "add_comment":
 			return handleAddComment(c, perms, args)
+		case "edit_comment":
+			return handleEditComment(c, perms, args)
 		case "list_comments":
 			return handleListComments(c, args)
 		case "delete":
 			return handleDeleteIssue(c, perms, args)
 		case "link":
 			return handleLinkIssues(c, perms, args)
+		case "list_link_types":
+			return handleListLinkTypes(c)
 		case "get_links":
 			return handleGetLinks(c, args)
 		case "get_history":
 			return handleGetHistory(c, args)
 		case "list_types":
 			return handleListTypes(c, args)
+		case "get_watchers":
+			return handleGetWatchers(c, args)
+		case "add_watcher":
+			return handleAddWatcher(c, perms, args)
+		case "remove_watcher":
+			return handleRemoveWatcher(c, perms, args)
 		default:
-			return ToolResultError(fmt.Sprintf("unknown action: %s. Valid actions: get, create, update, assign, transition, add_comment, list_comments, delete, link, get_links, get_history, list_types", args.Action)), nil, nil
+			return ToolResultError(fmt.Sprintf("unknown action: %s", args.Action)), nil, nil
 		}
 	}
 }
@@ -87,12 +101,19 @@ func handleCreateIssue(c *jira.Client, perms map[string]bool, args ManageIssuesA
 	if issueType == "" {
 		issueType = "Task"
 	}
-	labels := parseLabels(args.Labels)
-	createReq := jira.BuildCreateIssueRequest(
-		args.ProjectKey, args.Summary, issueType,
-		args.Description, args.Priority, args.AssigneeID,
-		args.ParentKey, labels,
-	)
+	createReq := jira.BuildCreateIssueRequest(jira.CreateIssueParams{
+		ProjectKey:  args.ProjectKey,
+		Summary:     args.Summary,
+		IssueType:   issueType,
+		Description: args.Description,
+		Priority:    args.Priority,
+		AssigneeID:  args.AssigneeID,
+		ParentKey:   args.ParentKey,
+		Labels:      parseCSV(args.Labels),
+		Components:  parseCSV(args.Components),
+		FixVersions: parseCSV(args.FixVersions),
+		DueDate:     args.DueDate,
+	})
 	result, err := c.CreateIssue(createReq)
 	if err != nil {
 		return ToolResultError(fmt.Sprintf("failed to create issue: %v", err)), nil, nil
@@ -107,11 +128,16 @@ func handleUpdateIssue(c *jira.Client, perms map[string]bool, args ManageIssuesA
 	if args.IssueKey == "" {
 		return ToolResultError("issue_key is required for 'update' action"), nil, nil
 	}
-	labels := parseLabels(args.Labels)
-	updateReq := jira.BuildUpdateIssueRequest(
-		args.Summary, args.Description, args.Priority,
-		args.AssigneeID, labels,
-	)
+	updateReq := jira.BuildUpdateIssueRequest(jira.UpdateIssueParams{
+		Summary:     args.Summary,
+		Description: args.Description,
+		Priority:    args.Priority,
+		AssigneeID:  args.AssigneeID,
+		Labels:      parseCSV(args.Labels),
+		Components:  parseCSV(args.Components),
+		FixVersions: parseCSV(args.FixVersions),
+		DueDate:     args.DueDate,
+	})
 	if err := c.UpdateIssue(args.IssueKey, updateReq); err != nil {
 		return ToolResultError(fmt.Sprintf("failed to update issue: %v", err)), nil, nil
 	}
@@ -373,14 +399,121 @@ func handleListTypes(c *jira.Client, args ManageIssuesArgs) (*mcp.CallToolResult
 	return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
 }
 
-// parseLabels splits a comma-separated labels string into a slice.
-func parseLabels(labelsCSV string) []string {
-	if labelsCSV == "" {
+// parseCSV splits a comma-separated string into a trimmed slice.
+// Returns nil if input is empty.
+func parseCSV(csv string) []string {
+	if csv == "" {
 		return nil
 	}
-	var labels []string
-	for _, l := range strings.Split(labelsCSV, ",") {
-		labels = append(labels, strings.TrimSpace(l))
+	var result []string
+	for _, item := range strings.Split(csv, ",") {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
 	}
-	return labels
+	return result
+}
+
+func handleEditComment(c *jira.Client, perms map[string]bool, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {
+	if !perms["EDIT_ALL_COMMENTS"] && !perms["EDIT_OWN_COMMENTS"] {
+		return ToolResultError("token lacks EDIT_ALL_COMMENTS or EDIT_OWN_COMMENTS permission"), nil, nil
+	}
+	if args.IssueKey == "" || args.CommentID == "" || args.Comment == "" {
+		return ToolResultError("issue_key, comment_id, and comment are required for 'edit_comment' action"), nil, nil
+	}
+	result, err := c.EditComment(args.IssueKey, args.CommentID, args.Comment)
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to edit comment: %v", err)), nil, nil
+	}
+	return ToolResultText(jira.SafeJSON(map[string]string{
+		"id":      result.ID,
+		"updated": result.Updated,
+		"status":  "comment updated",
+	}, 30000)), nil, nil
+}
+
+func handleListLinkTypes(c *jira.Client) (*mcp.CallToolResult, any, error) {
+	result, err := c.GetIssueLinkTypes()
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to list link types: %v", err)), nil, nil
+	}
+	type flatLinkType struct {
+		ID      string `json:"id"`
+		Name    string `json:"name"`
+		Inward  string `json:"inward"`
+		Outward string `json:"outward"`
+	}
+	flat := struct {
+		Total int            `json:"total"`
+		Types []flatLinkType `json:"types"`
+	}{Total: len(result.IssueLinkTypes)}
+	for _, lt := range result.IssueLinkTypes {
+		flat.Types = append(flat.Types, flatLinkType{
+			ID:      lt.ID,
+			Name:    lt.Name,
+			Inward:  lt.Inward,
+			Outward: lt.Outward,
+		})
+	}
+	return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
+}
+
+func handleGetWatchers(c *jira.Client, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {
+	if args.IssueKey == "" {
+		return ToolResultError("issue_key is required for 'get_watchers' action"), nil, nil
+	}
+	result, err := c.GetWatchers(args.IssueKey)
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to get watchers: %v", err)), nil, nil
+	}
+	type flatWatcher struct {
+		AccountID   string `json:"account_id"`
+		DisplayName string `json:"display_name"`
+		Active      bool   `json:"active"`
+	}
+	flat := struct {
+		IssueKey   string        `json:"issue_key"`
+		WatchCount int           `json:"watch_count"`
+		IsWatching bool          `json:"is_watching"`
+		Watchers   []flatWatcher `json:"watchers"`
+	}{
+		IssueKey:   args.IssueKey,
+		WatchCount: result.WatchCount,
+		IsWatching: result.IsWatching,
+	}
+	for _, w := range result.Watchers {
+		flat.Watchers = append(flat.Watchers, flatWatcher{
+			AccountID:   w.AccountID,
+			DisplayName: w.DisplayName,
+			Active:      w.Active,
+		})
+	}
+	return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
+}
+
+func handleAddWatcher(c *jira.Client, perms map[string]bool, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {
+	if !perms["MANAGE_WATCHERS"] {
+		return ToolResultError("token lacks MANAGE_WATCHERS permission"), nil, nil
+	}
+	if args.IssueKey == "" || args.AssigneeID == "" {
+		return ToolResultError("issue_key and assignee_id (as account ID) are required for 'add_watcher' action"), nil, nil
+	}
+	if err := c.AddWatcher(args.IssueKey, args.AssigneeID); err != nil {
+		return ToolResultError(fmt.Sprintf("failed to add watcher: %v", err)), nil, nil
+	}
+	return ToolResultText(fmt.Sprintf("Added watcher %s to %s", args.AssigneeID, args.IssueKey)), nil, nil
+}
+
+func handleRemoveWatcher(c *jira.Client, perms map[string]bool, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {
+	if !perms["MANAGE_WATCHERS"] {
+		return ToolResultError("token lacks MANAGE_WATCHERS permission"), nil, nil
+	}
+	if args.IssueKey == "" || args.AssigneeID == "" {
+		return ToolResultError("issue_key and assignee_id (as account ID) are required for 'remove_watcher' action"), nil, nil
+	}
+	if err := c.RemoveWatcher(args.IssueKey, args.AssigneeID); err != nil {
+		return ToolResultError(fmt.Sprintf("failed to remove watcher: %v", err)), nil, nil
+	}
+	return ToolResultText(fmt.Sprintf("Removed watcher %s from %s", args.AssigneeID, args.IssueKey)), nil, nil
 }

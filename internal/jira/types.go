@@ -90,8 +90,11 @@ type IssueFields struct {
 	Project        *Project    `json:"project,omitempty"`
 	Labels         []string    `json:"labels,omitempty"`
 	Components     []Component `json:"components,omitempty"`
+	FixVersions    []Version   `json:"fixVersions,omitempty"`
+	DueDate        string      `json:"duedate,omitempty"`
 	Created        string      `json:"created,omitempty"`
 	Updated        string      `json:"updated,omitempty"`
+	Resolution     *Status     `json:"resolution,omitempty"`
 	ResolutionDate string      `json:"resolutiondate,omitempty"`
 	Parent         *Issue      `json:"parent,omitempty"`
 
@@ -301,14 +304,58 @@ type CreateIssueRequest struct {
 
 // CreateIssueFields are the fields required to create an issue.
 type CreateIssueFields struct {
-	Project     ProjectRef   `json:"project"`
-	Summary     string       `json:"summary"`
-	IssueType   IssueTypeRef `json:"issuetype"`
-	Description interface{}  `json:"description,omitempty"`
-	Assignee    *UserRef     `json:"assignee,omitempty"`
-	Priority    *PriorityRef `json:"priority,omitempty"`
-	Labels      []string     `json:"labels,omitempty"`
-	Parent      *IssueRef    `json:"parent,omitempty"`
+	Project     ProjectRef     `json:"project"`
+	Summary     string         `json:"summary"`
+	IssueType   IssueTypeRef   `json:"issuetype"`
+	Description interface{}    `json:"description,omitempty"`
+	Assignee    *UserRef       `json:"assignee,omitempty"`
+	Priority    *PriorityRef   `json:"priority,omitempty"`
+	Labels      []string       `json:"labels,omitempty"`
+	Parent      *IssueRef      `json:"parent,omitempty"`
+	Components  []ComponentRef `json:"components,omitempty"`
+	FixVersions []VersionRef   `json:"fixVersions,omitempty"`
+	DueDate     string         `json:"duedate,omitempty"`
+}
+
+// ComponentRef is a minimal component reference by name.
+type ComponentRef struct {
+	Name string `json:"name"`
+}
+
+// VersionRef is a minimal version reference by name.
+type VersionRef struct {
+	Name string `json:"name"`
+}
+
+// CreateVersionRequest is the payload for creating a project version.
+type CreateVersionRequest struct {
+	Name        string `json:"name"`
+	ProjectKey  string `json:"project,omitempty"`
+	ProjectID   int    `json:"projectId,omitempty"`
+	Description string `json:"description,omitempty"`
+	StartDate   string `json:"startDate,omitempty"`
+	ReleaseDate string `json:"releaseDate,omitempty"`
+}
+
+// WatchersResponse is the response from the watchers endpoint.
+type WatchersResponse struct {
+	WatchCount int    `json:"watchCount"`
+	IsWatching bool   `json:"isWatching"`
+	Watchers   []User `json:"watchers"`
+}
+
+// IssueLinkTypesResponse is the response from the issueLinkType endpoint.
+type IssueLinkTypesResponse struct {
+	IssueLinkTypes []IssueLinkType `json:"issueLinkTypes"`
+}
+
+// UpdateSprintRequest is the payload for updating a sprint.
+type UpdateSprintRequest struct {
+	Name      string `json:"name,omitempty"`
+	State     string `json:"state,omitempty"`
+	StartDate string `json:"startDate,omitempty"`
+	EndDate   string `json:"endDate,omitempty"`
+	Goal      string `json:"goal,omitempty"`
 }
 
 // ProjectRef is a minimal project reference by key.

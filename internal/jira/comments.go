@@ -41,3 +41,23 @@ func (c *Client) AddComment(issueKey, body string) (*Comment, error) {
 	}
 	return &result, nil
 }
+
+// EditComment updates an existing comment on an issue.
+func (c *Client) EditComment(issueKey, commentID, body string) (*Comment, error) {
+	path := fmt.Sprintf("/issue/%s/comment/%s",
+		url.PathEscape(issueKey), url.PathEscape(commentID))
+	req := &AddCommentRequest{
+		Body: buildADFParagraph(body),
+	}
+
+	data, err := c.Put(path, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var result Comment
+	if err := unmarshalJSON(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}

@@ -10,7 +10,7 @@ import (
 )
 
 type ManageBoardsArgs struct {
-	Action     string `json:"action" jsonschema:"Action to perform: 'list_boards', 'get_board', 'list_sprints', 'get_sprint_issues', 'get_backlog', 'get_active_sprint', 'search_sprints', 'create_sprint', 'move_to_sprint'" jsonschema_enum:"list_boards,get_board,list_sprints,get_sprint_issues,get_backlog,get_active_sprint,search_sprints,create_sprint,move_to_sprint"`
+	Action     string `json:"action" jsonschema:"Action to perform: 'list_boards', 'get_board', 'list_sprints', 'get_sprint_issues', 'get_backlog', 'get_active_sprint', 'search_sprints', 'create_sprint', 'update_sprint', 'move_to_sprint'" jsonschema_enum:"list_boards,get_board,list_sprints,get_sprint_issues,get_backlog,get_active_sprint,search_sprints,create_sprint,update_sprint,move_to_sprint"`
 	ProjectKey string `json:"project_key,omitempty" jsonschema:"Filter boards by project key (for 'list_boards')"`
 	BoardID    int    `json:"board_id,omitempty" jsonschema:"Board ID (for 'get_board', 'list_sprints', 'get_backlog', 'get_active_sprint', 'search_sprints', 'create_sprint')"`
 	SprintID   int    `json:"sprint_id,omitempty" jsonschema:"Sprint ID (for 'get_sprint_issues', 'move_to_sprint')"`
@@ -172,48 +172,78 @@ func ManageBoardsHandler(c *jira.Client) func(context.Context, *mcp.CallToolRequ
 			return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
 
 		case "create_sprint":
-			if args.BoardID == 0 || args.Name == "" {
-				return ToolResultError("board_id and name are required for 'create_sprint' action"), nil, nil
-			}
-			sprint, err := c.CreateSprint(args.BoardID, args.Name, args.StartDate, args.EndDate, args.Goal)
-			if err != nil {
-				return ToolResultError(fmt.Sprintf("failed to create sprint: %v", err)), nil, nil
-			}
-			return ToolResultText(jira.SafeJSON(map[string]interface{}{
-				"id":         sprint.ID,
-				"name":       sprint.Name,
-				"state":      sprint.State,
-				"start_date": sprint.StartDate,
-				"end_date":   sprint.EndDate,
-				"goal":       sprint.Goal,
-				"status":     "sprint created",
-			}, 30000)), nil, nil
-
+			return handleCreateSprint(c, args)
+		case "update_sprint":
+			return handleUpdateSprint(c, args)
 		case "move_to_sprint":
-			if args.SprintID == 0 || args.IssueKeys == "" {
-				return ToolResultError("sprint_id and issue_keys are required for 'move_to_sprint' action"), nil, nil
-			}
-			var keys []string
-			for _, k := range strings.Split(args.IssueKeys, ",") {
-				trimmed := strings.TrimSpace(k)
-				if trimmed != "" {
-					keys = append(keys, trimmed)
-				}
-			}
-			if len(keys) == 0 {
-				return ToolResultError("issue_keys must contain at least one issue key"), nil, nil
-			}
-			if err := c.MoveIssuesToSprint(args.SprintID, keys); err != nil {
-				return ToolResultError(fmt.Sprintf("failed to move issues to sprint: %v", err)), nil, nil
-			}
-			return ToolResultText(jira.SafeJSON(map[string]interface{}{
-				"sprint_id": args.SprintID,
-				"issues":    keys,
-				"status":    "issues moved to sprint",
-			}, 30000)), nil, nil
+			return handleMoveToSprint(c, args)
 
 		default:
-			return ToolResultError(fmt.Sprintf("unknown action: %s. Valid actions: list_boards, get_board, list_sprints, get_sprint_issues, get_backlog, get_active_sprint, search_sprints, create_sprint, move_to_sprint", args.Action)), nil, nil
+			return ToolResultError(fmt.Sprintf("unknown action: %s", args.Action)), nil, nil
 		}
+	}
+}
+
+func handleCreateSprint(c *jira.Client, args ManageBoardsArgs) (*mcp.CallToolResult, any, error) {
+	if args.BoardID == 0 || args.Name == "" {
+		return ToolResultError("board_id and name are required for 'create_sprint' action"), nil, nil
+	}
+	sprint, err := c.CreateSprint(args.BoardID, args.Name, args.StartDate, args.EndDate, args.Goal)
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to create sprint: %v", err)), nil, nil
+	}
+	return ToolResultText(jira.SafeJSON(flattenSprint(sprint, "sprint created"), 30000)), nil, nil
+}
+
+func handleUpdateSprint(c *jira.Client, args ManageBoardsArgs) (*mcp.CallToolResult, any, error) {
+	if args.SprintID == 0 {
+		return ToolResultError("sprint_id is required for 'update_sprint' action"), nil, nil
+	}
+	sprint, err := c.UpdateSprint(args.SprintID, &jira.UpdateSprintRequest{
+		Name:      args.Name,
+		State:     args.State,
+		StartDate: args.StartDate,
+		EndDate:   args.EndDate,
+		Goal:      args.Goal,
+	})
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to update sprint: %v", err)), nil, nil
+	}
+	return ToolResultText(jira.SafeJSON(flattenSprint(sprint, "sprint updated"), 30000)), nil, nil
+}
+
+func handleMoveToSprint(c *jira.Client, args ManageBoardsArgs) (*mcp.CallToolResult, any, error) {
+	if args.SprintID == 0 || args.IssueKeys == "" {
+		return ToolResultError("sprint_id and issue_keys are required for 'move_to_sprint' action"), nil, nil
+	}
+	var keys []string
+	for _, k := range strings.Split(args.IssueKeys, ",") {
+		trimmed := strings.TrimSpace(k)
+		if trimmed != "" {
+			keys = append(keys, trimmed)
+		}
+	}
+	if len(keys) == 0 {
+		return ToolResultError("issue_keys must contain at least one issue key"), nil, nil
+	}
+	if err := c.MoveIssuesToSprint(args.SprintID, keys); err != nil {
+		return ToolResultError(fmt.Sprintf("failed to move issues to sprint: %v", err)), nil, nil
+	}
+	return ToolResultText(jira.SafeJSON(map[string]interface{}{
+		"sprint_id": args.SprintID,
+		"issues":    keys,
+		"status":    "issues moved to sprint",
+	}, 30000)), nil, nil
+}
+
+func flattenSprint(s *jira.Sprint, status string) map[string]interface{} {
+	return map[string]interface{}{
+		"id":         s.ID,
+		"name":       s.Name,
+		"state":      s.State,
+		"start_date": s.StartDate,
+		"end_date":   s.EndDate,
+		"goal":       s.Goal,
+		"status":     status,
 	}
 }

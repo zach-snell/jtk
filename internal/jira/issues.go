@@ -46,57 +46,118 @@ func (c *Client) AssignIssue(issueKey, accountID string) error {
 	return err
 }
 
-// BuildCreateIssueRequest constructs a CreateIssueRequest from simple parameters.
-func BuildCreateIssueRequest(projectKey, summary, issueType, description, priority, assigneeID, parentKey string, labels []string) *CreateIssueRequest {
+// CreateIssueParams bundles all parameters for creating an issue.
+type CreateIssueParams struct {
+	ProjectKey  string
+	Summary     string
+	IssueType   string
+	Description string
+	Priority    string
+	AssigneeID  string
+	ParentKey   string
+	Labels      []string
+	Components  []string
+	FixVersions []string
+	DueDate     string
+}
+
+// BuildCreateIssueRequest constructs a CreateIssueRequest from parameters.
+func BuildCreateIssueRequest(p CreateIssueParams) *CreateIssueRequest {
 	req := &CreateIssueRequest{
 		Fields: CreateIssueFields{
-			Project:   ProjectRef{Key: projectKey},
-			Summary:   summary,
-			IssueType: IssueTypeRef{Name: issueType},
+			Project:   ProjectRef{Key: p.ProjectKey},
+			Summary:   p.Summary,
+			IssueType: IssueTypeRef{Name: p.IssueType},
 		},
 	}
 
-	if description != "" {
-		req.Fields.Description = buildADFParagraph(description)
+	if p.Description != "" {
+		req.Fields.Description = buildADFParagraph(p.Description)
 	}
-	if priority != "" {
-		req.Fields.Priority = &PriorityRef{Name: priority}
+	if p.Priority != "" {
+		req.Fields.Priority = &PriorityRef{Name: p.Priority}
 	}
-	if assigneeID != "" {
-		req.Fields.Assignee = &UserRef{AccountID: assigneeID}
+	if p.AssigneeID != "" {
+		req.Fields.Assignee = &UserRef{AccountID: p.AssigneeID}
 	}
-	if parentKey != "" {
-		req.Fields.Parent = &IssueRef{Key: parentKey}
+	if p.ParentKey != "" {
+		req.Fields.Parent = &IssueRef{Key: p.ParentKey}
 	}
-	if len(labels) > 0 {
-		req.Fields.Labels = labels
+	if len(p.Labels) > 0 {
+		req.Fields.Labels = p.Labels
+	}
+	if len(p.Components) > 0 {
+		refs := make([]ComponentRef, len(p.Components))
+		for i, name := range p.Components {
+			refs[i] = ComponentRef{Name: name}
+		}
+		req.Fields.Components = refs
+	}
+	if len(p.FixVersions) > 0 {
+		refs := make([]VersionRef, len(p.FixVersions))
+		for i, name := range p.FixVersions {
+			refs[i] = VersionRef{Name: name}
+		}
+		req.Fields.FixVersions = refs
+	}
+	if p.DueDate != "" {
+		req.Fields.DueDate = p.DueDate
 	}
 
 	return req
 }
 
-// BuildUpdateIssueRequest constructs an UpdateIssueRequest from optional fields.
-func BuildUpdateIssueRequest(summary, description, priority, assigneeID string, labels []string) *UpdateIssueRequest {
+// UpdateIssueParams bundles all parameters for updating an issue.
+type UpdateIssueParams struct {
+	Summary     string
+	Description string
+	Priority    string
+	AssigneeID  string
+	Labels      []string
+	Components  []string
+	FixVersions []string
+	DueDate     string
+}
+
+// BuildUpdateIssueRequest constructs an UpdateIssueRequest from parameters.
+func BuildUpdateIssueRequest(p UpdateIssueParams) *UpdateIssueRequest {
 	fields := make(map[string]interface{})
 
-	if summary != "" {
-		fields["summary"] = summary
+	if p.Summary != "" {
+		fields["summary"] = p.Summary
 	}
-	if description != "" {
-		fields["description"] = buildADFParagraph(description)
+	if p.Description != "" {
+		fields["description"] = buildADFParagraph(p.Description)
 	}
-	if priority != "" {
-		fields["priority"] = map[string]string{"name": priority}
+	if p.Priority != "" {
+		fields["priority"] = map[string]string{"name": p.Priority}
 	}
-	if assigneeID != "" {
-		if assigneeID == "unassigned" || assigneeID == "none" {
+	if p.AssigneeID != "" {
+		if p.AssigneeID == "unassigned" || p.AssigneeID == "none" {
 			fields["assignee"] = nil
 		} else {
-			fields["assignee"] = map[string]string{"accountId": assigneeID}
+			fields["assignee"] = map[string]string{"accountId": p.AssigneeID}
 		}
 	}
-	if labels != nil {
-		fields["labels"] = labels
+	if p.Labels != nil {
+		fields["labels"] = p.Labels
+	}
+	if p.Components != nil {
+		refs := make([]map[string]string, len(p.Components))
+		for i, name := range p.Components {
+			refs[i] = map[string]string{"name": name}
+		}
+		fields["components"] = refs
+	}
+	if p.FixVersions != nil {
+		refs := make([]map[string]string, len(p.FixVersions))
+		for i, name := range p.FixVersions {
+			refs[i] = map[string]string{"name": name}
+		}
+		fields["fixVersions"] = refs
+	}
+	if p.DueDate != "" {
+		fields["duedate"] = p.DueDate
 	}
 
 	return &UpdateIssueRequest{Fields: fields}

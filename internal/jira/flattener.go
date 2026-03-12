@@ -11,21 +11,25 @@ import (
 
 // FlattenedIssue is a token-efficient representation of a Jira issue.
 type FlattenedIssue struct {
-	Key         string   `json:"key"`
-	Summary     string   `json:"summary"`
-	Status      string   `json:"status"`
-	Type        string   `json:"type"`
-	Priority    string   `json:"priority"`
-	Assignee    string   `json:"assignee"`
-	Reporter    string   `json:"reporter"`
-	Created     string   `json:"created"`
-	Updated     string   `json:"updated"`
-	Description string   `json:"description"`
-	Labels      []string `json:"labels"`
-	Components  []string `json:"components"`
-	Sprint      string   `json:"sprint,omitempty"`
-	StoryPoints float64  `json:"story_points,omitempty"`
-	ParentKey   string   `json:"parent_key,omitempty"`
+	Key            string   `json:"key"`
+	Summary        string   `json:"summary"`
+	Status         string   `json:"status"`
+	Type           string   `json:"type"`
+	Priority       string   `json:"priority"`
+	Assignee       string   `json:"assignee"`
+	Reporter       string   `json:"reporter"`
+	Created        string   `json:"created"`
+	Updated        string   `json:"updated"`
+	DueDate        string   `json:"due_date,omitempty"`
+	Resolution     string   `json:"resolution,omitempty"`
+	ResolutionDate string   `json:"resolution_date,omitempty"`
+	Description    string   `json:"description"`
+	Labels         []string `json:"labels"`
+	Components     []string `json:"components"`
+	FixVersions    []string `json:"fix_versions,omitempty"`
+	Sprint         string   `json:"sprint,omitempty"`
+	StoryPoints    float64  `json:"story_points,omitempty"`
+	ParentKey      string   `json:"parent_key,omitempty"`
 }
 
 // FlattenIssue converts a raw Jira issue map into a FlattenedIssue.
@@ -119,9 +123,18 @@ func FlattenIssueFromTyped(issue *Issue) *FlattenedIssue {
 	}
 
 	fi.Labels = issue.Fields.Labels
+	fi.DueDate = issue.Fields.DueDate
+	fi.ResolutionDate = issue.Fields.ResolutionDate
+
+	if issue.Fields.Resolution != nil {
+		fi.Resolution = issue.Fields.Resolution.Name
+	}
 
 	for _, comp := range issue.Fields.Components {
 		fi.Components = append(fi.Components, comp.Name)
+	}
+	for _, ver := range issue.Fields.FixVersions {
+		fi.FixVersions = append(fi.FixVersions, ver.Name)
 	}
 
 	if issue.Fields.Sprint != nil {

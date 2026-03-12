@@ -1,6 +1,29 @@
 package jira
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+)
+
+// GetIssueLinkTypes returns all available issue link types.
+func (c *Client) GetIssueLinkTypes() (*IssueLinkTypesResponse, error) {
+	return GetJSON[IssueLinkTypesResponse](c, "/issueLinkType")
+}
+
+// GetIssueLinks returns the links on an issue (from the issue's fields).
+func (c *Client) GetIssueLinks(issueKey string) ([]IssueLink, error) {
+	path := fmt.Sprintf("/issue/%s?fields=issuelinks", url.PathEscape(issueKey))
+	type resp struct {
+		Fields struct {
+			IssueLinks []IssueLink `json:"issuelinks"`
+		} `json:"fields"`
+	}
+	r, err := GetJSON[resp](c, path)
+	if err != nil {
+		return nil, err
+	}
+	return r.Fields.IssueLinks, nil
+}
 
 // CreateIssueLink links two issues together.
 func (c *Client) CreateIssueLink(req *CreateIssueLinkRequest) error {

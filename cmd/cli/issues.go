@@ -159,7 +159,16 @@ var issuesCreateCmd = &cobra.Command{
 		}
 
 		client := getClient()
-		req := jira.BuildCreateIssueRequest(project, summary, issueType, description, priority, assignee, parent, labels)
+		req := jira.BuildCreateIssueRequest(jira.CreateIssueParams{
+			ProjectKey:  project,
+			Summary:     summary,
+			IssueType:   issueType,
+			Description: description,
+			Priority:    priority,
+			AssigneeID:  assignee,
+			ParentKey:   parent,
+			Labels:      labels,
+		})
 		result, err := client.CreateIssue(req)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)

@@ -3,6 +3,7 @@ package jira
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 )
@@ -168,4 +169,36 @@ func (c *Client) MoveIssuesToSprint(sprintID int, issueKeys []string) error {
 	}
 	_, err := c.PostAgile(path, req)
 	return err
+}
+
+// UpdateSprint updates an existing sprint.
+func (c *Client) UpdateSprint(sprintID int, req *UpdateSprintRequest) (*Sprint, error) {
+	path := fmt.Sprintf("/sprint/%d", sprintID)
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling sprint update: %w", err)
+	}
+
+	// Agile API uses PUT for sprint updates
+	resp, err := c.do("PUT", c.agileURL+path, b, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(data))
+	}
+
+	var result Sprint
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("unmarshaling sprint: %w", err)
+	}
+	return &result, nil
 }

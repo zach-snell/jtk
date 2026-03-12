@@ -9,9 +9,13 @@ import (
 )
 
 type ManageVersionsArgs struct {
-	Action     string `json:"action" jsonschema:"Action to perform: 'list', 'get'" jsonschema_enum:"list,get"`
-	ProjectKey string `json:"project_key,omitempty" jsonschema:"Project key (for 'list')"`
-	VersionID  string `json:"version_id,omitempty" jsonschema:"Version ID (for 'get')"`
+	Action      string `json:"action" jsonschema:"Action to perform: 'list', 'get', 'create'" jsonschema_enum:"list,get,create"`
+	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project key (for 'list', 'create')"`
+	VersionID   string `json:"version_id,omitempty" jsonschema:"Version ID (for 'get')"`
+	Name        string `json:"name,omitempty" jsonschema:"Version name (required for 'create')"`
+	Description string `json:"description,omitempty" jsonschema:"Version description (for 'create')"`
+	StartDate   string `json:"start_date,omitempty" jsonschema:"Start date YYYY-MM-DD (for 'create')"`
+	ReleaseDate string `json:"release_date,omitempty" jsonschema:"Release date YYYY-MM-DD (for 'create')"`
 }
 
 // ManageVersionsHandler handles project version operations.
@@ -62,8 +66,24 @@ func ManageVersionsHandler(c *jira.Client) func(context.Context, *mcp.CallToolRe
 			}
 			return ToolResultText(jira.SafeJSON(result, 30000)), nil, nil
 
+		case "create":
+			if args.ProjectKey == "" || args.Name == "" {
+				return ToolResultError("project_key and name are required for 'create' action"), nil, nil
+			}
+			result, err := c.CreateVersion(&jira.CreateVersionRequest{
+				Name:        args.Name,
+				ProjectKey:  args.ProjectKey,
+				Description: args.Description,
+				StartDate:   args.StartDate,
+				ReleaseDate: args.ReleaseDate,
+			})
+			if err != nil {
+				return ToolResultError(fmt.Sprintf("failed to create version: %v", err)), nil, nil
+			}
+			return ToolResultText(jira.SafeJSON(result, 30000)), nil, nil
+
 		default:
-			return ToolResultError(fmt.Sprintf("unknown action: %s. Valid actions: list, get", args.Action)), nil, nil
+			return ToolResultError(fmt.Sprintf("unknown action: %s. Valid actions: list, get, create", args.Action)), nil, nil
 		}
 	}
 }
