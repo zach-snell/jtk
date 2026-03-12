@@ -1,0 +1,66 @@
+---
+title: CLI Overview
+description: Overview of all jtk CLI commands.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Commands
+
+jtk provides a Cobra-based CLI with the following command groups:
+
+<CardGrid>
+	<LinkCard title="jtk issues" description="Get, search, create, transition, and comment on issues" href="/jtk/cli/issues/" />
+	<LinkCard title="jtk boards" description="List boards and manage sprints" href="/jtk/cli/boards/" />
+	<LinkCard title="jtk projects" description="List and inspect projects" href="/jtk/cli/projects/" />
+	<LinkCard title="jtk users" description="Search and inspect users" href="/jtk/cli/users/" />
+	<LinkCard title="jtk worklogs" description="List and add time tracking entries" href="/jtk/cli/worklogs/" />
+	<LinkCard title="jtk versions" description="List and inspect project versions" href="/jtk/cli/versions/" />
+</CardGrid>
+
+## Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output raw JSON instead of formatted tables |
+| `--version` | Print jtk version |
+| `--help` | Show help for any command |
+
+## Authentication Commands
+
+| Command | Description |
+|---------|-------------|
+| `jtk auth` | Interactive login — prompts for domain, email, API token |
+| `jtk status` | Show current authentication status |
+| `jtk logout` | Remove stored credentials |
+
+## MCP Command
+
+| Command | Description |
+|---------|-------------|
+| `jtk mcp` | Start the MCP server on stdio |
+| `jtk mcp --port 8080` | Start the MCP server with HTTP Streamable transport |
+
+## Git-Aware Commands
+
+Several commands auto-detect the issue key from your current git branch if no argument is provided:
+
+- `jtk issues get`
+- `jtk issues transition`
+- `jtk issues comment`
+- `jtk worklogs list`
+- `jtk worklogs add`
+
+See [Git Integration](/jtk/guides/git-integration/) for details on supported branch naming patterns.
+
+## Output Modes
+
+By default, jtk outputs human-readable formatted tables. Use `--json` for raw JSON:
+
+```bash
+# Formatted table output
+jtk projects list
+
+# Raw JSON output
+jtk projects list --json
+```

@@ -1,0 +1,58 @@
+---
+title: jtk versions
+description: List and inspect project versions (releases).
+---
+
+The `versions` command group manages project versions. Aliases: `version`, `v`.
+
+## jtk versions list
+
+List all versions for a project.
+
+```bash
+jtk versions list PROJ
+jtk versions list PROJ --json
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `project-key` | Project key (required) |
+
+**Example output:**
+
+```
+ID      Name     Released  Archived  Release Date
+10100   v1.0.0   yes       no        2024-12-01
+10101   v1.1.0   yes       no        2025-01-01
+10102   v2.0.0   no        no        2025-02-01
+
+```
+
+## jtk versions get
+
+Get version details.
+
+```bash
+jtk versions get 10102
+jtk versions get 10102 --json
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `version-id` | Version ID (required) |
+
+**Example output:**
+
+```
+Version: v2.0.0
+  ID:           10102
+  Description:  Major release with OAuth support
+  Released:     no
+  Archived:     no
+  Start Date:   2025-01-15
+  Release Date: 2025-02-01
+```

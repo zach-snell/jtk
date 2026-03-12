@@ -1,0 +1,107 @@
+---
+title: manage_issues
+description: MCP tool for Jira issue operations — get, create, update, assign, transition, comment, delete, link, and more.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Unified tool for Jira issue operations.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Permission |
+|--------|-------------|-----------------|-----------------|------------|
+| `get` | Get issue details | `issue_key` | | BROWSE_PROJECTS |
+| `create` | Create a new issue | `project_key`, `summary` | `issue_type`, `description`, `priority`, `assignee_id`, `parent_key`, `labels` | CREATE_ISSUES |
+| `update` | Update an existing issue | `issue_key` | `summary`, `description`, `priority`, `assignee_id`, `labels` | EDIT_ISSUES |
+| `assign` | Assign/unassign an issue | `issue_key`, `assignee_id` | | ASSIGN_ISSUES |
+| `transition` | Transition issue status | `issue_key`, `transition` | | TRANSITION_ISSUES |
+| `add_comment` | Add a comment | `issue_key`, `comment` | | ADD_COMMENTS |
+| `list_comments` | List issue comments | `issue_key` | `start_at`, `max_results` | BROWSE_PROJECTS |
+| `delete` | Delete an issue | `issue_key` | | DELETE_ISSUES |
+| `link` | Link two issues | `link_type`, `inward_key`, `outward_key` | `comment` | LINK_ISSUES |
+| `get_links` | Get issue links | `issue_key` | | BROWSE_PROJECTS |
+| `get_history` | Get change history | `issue_key` | `start_at`, `max_results` | BROWSE_PROJECTS |
+| `list_types` | List issue types for project | `project_key` or `project_id` | | BROWSE_PROJECTS |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** Action to perform |
+| `issue_key` | string | Jira issue key (e.g., `PROJ-123`) |
+| `project_key` | string | Project key (for `create`, `list_types`) |
+| `project_id` | string | Project ID (for `list_types` — use `project_key` or `project_id`) |
+| `summary` | string | Issue summary/title (for `create`, `update`) |
+| `description` | string | Issue description (for `create`, `update`) |
+| `issue_type` | string | Issue type: Story, Bug, Task, Epic, Sub-task (for `create`). Defaults to `Task` |
+| `priority` | string | Priority: Highest, High, Medium, Low, Lowest (for `create`, `update`) |
+| `assignee_id` | string | Assignee account ID (for `create`, `update`, `assign`). Use `unassigned` to remove |
+| `parent_key` | string | Parent issue key (for `create`) |
+| `labels` | string | Comma-separated labels (for `create`, `update`) |
+| `transition` | string | Target transition name (for `transition`), e.g., `In Progress`, `Done` |
+| `comment` | string | Comment body text (for `add_comment`, `link`) |
+| `link_type` | string | Link type name (for `link`), e.g., `Blocks`, `Duplicate`, `Relates` |
+| `inward_key` | string | Inward issue key (for `link`) — the issue that IS affected |
+| `outward_key` | string | Outward issue key (for `link`) — the issue that CAUSES the effect |
+| `start_at` | int | Pagination start (for `list_comments`, `get_history`) |
+| `max_results` | int | Max results to return |
+
+## Examples
+
+### Get an issue
+
+```json
+{
+  "action": "get",
+  "issue_key": "PROJ-123"
+}
+```
+
+### Create a bug
+
+```json
+{
+  "action": "create",
+  "project_key": "PROJ",
+  "summary": "Login button unresponsive on mobile",
+  "issue_type": "Bug",
+  "priority": "High",
+  "labels": "mobile,urgent"
+}
+```
+
+### Transition to In Progress
+
+```json
+{
+  "action": "transition",
+  "issue_key": "PROJ-123",
+  "transition": "In Progress"
+}
+```
+
+### Link two issues
+
+```json
+{
+  "action": "link",
+  "link_type": "Blocks",
+  "inward_key": "PROJ-124",
+  "outward_key": "PROJ-123",
+  "comment": "PROJ-123 blocks PROJ-124"
+}
+```
+
+### List issue types for a project
+
+```json
+{
+  "action": "list_types",
+  "project_key": "PROJ"
+}
+```
+
+<Aside type="note">
+Write actions (`create`, `update`, `assign`, `transition`, `add_comment`, `delete`, `link`) are only available if the API token has the corresponding Jira permission. The tool description dynamically reflects available actions.
+</Aside>

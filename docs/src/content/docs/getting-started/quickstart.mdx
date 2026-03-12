@@ -1,0 +1,84 @@
+---
+title: Quick Start
+description: Get up and running with jtk in under 5 minutes.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+<Steps>
+
+1. **Install jtk**
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/zach-snell/jtk/main/install.sh | bash
+   ```
+
+2. **Authenticate with Jira**
+
+   ```bash
+   jtk auth
+   ```
+
+   Enter your Jira domain, email, and API token when prompted.
+
+3. **Run your first command**
+
+   ```bash
+   # List your projects
+   jtk projects list
+
+   # Search for issues assigned to you
+   jtk issues search "assignee = currentUser() ORDER BY updated DESC"
+
+   # Get a specific issue
+   jtk issues get PROJ-123
+   ```
+
+4. **Set up MCP for your AI agent**
+
+   Add to your Claude Desktop config:
+
+   ```json
+   {
+     "mcpServers": {
+       "jtk": {
+         "command": "jtk",
+         "args": ["mcp"]
+       }
+     }
+   }
+   ```
+
+   Restart your AI client, then try a conversation like:
+
+   > "What issues are assigned to me in the PROJ project?"
+   >
+   > "Create a bug report in PROJ: Login button is unresponsive on mobile"
+   >
+   > "What's the status of PROJ-456? Show me the dev info too."
+
+</Steps>
+
+## Example AI Conversation
+
+Once MCP is configured, your AI agent can interact with Jira naturally:
+
+**You:** What's in the current sprint for board 42?
+
+**AI:** Let me check the active sprint for board 42.
+
+*Uses `manage_boards` with action `get_active_sprint`, then `get_sprint_issues`*
+
+> **Sprint: "Sprint 15" (Jan 13 - Jan 27)**
+>
+> | Key | Summary | Status | Assignee |
+> |-----|---------|--------|----------|
+> | PROJ-100 | Add OAuth support | In Progress | Jane |
+> | PROJ-101 | Fix pagination bug | Done | Bob |
+> | PROJ-102 | Update API docs | To Do | Unassigned |
+>
+> 1 of 3 issues complete (33%)
+
+<Aside type="tip">
+jtk auto-detects your git branch. If you're on `feature/PROJ-123-add-auth`, just run `jtk issues get` without arguments.
+</Aside>

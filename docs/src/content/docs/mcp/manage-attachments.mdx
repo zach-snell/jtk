@@ -1,0 +1,83 @@
+---
+title: manage_attachments
+description: MCP tool for managing Jira issue attachments.
+---
+
+Manage Jira issue attachments.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `list` | List attachments on an issue | `issue_key` | |
+| `download` | Download an attachment | `attachment_id` | |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `list` or `download` |
+| `issue_key` | string | Jira issue key (for `list`) |
+| `attachment_id` | string | Attachment ID (for `download`) |
+
+## Examples
+
+### List attachments
+
+```json
+{
+  "action": "list",
+  "issue_key": "PROJ-123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "issue_key": "PROJ-123",
+  "total": 2,
+  "attachments": [
+    {
+      "id": "10200",
+      "filename": "screenshot.png",
+      "author": "Jane Doe",
+      "created": "2025-01-14T10:00:00.000+0000",
+      "size": 245760,
+      "mime_type": "image/png"
+    },
+    {
+      "id": "10201",
+      "filename": "logs.txt",
+      "author": "Bob Smith",
+      "created": "2025-01-14T11:00:00.000+0000",
+      "size": 1024,
+      "mime_type": "text/plain"
+    }
+  ]
+}
+```
+
+### Download an attachment
+
+```json
+{
+  "action": "download",
+  "attachment_id": "10200"
+}
+```
+
+**Response:**
+
+```json
+{
+  "attachment_id": "10200",
+  "filename": "screenshot.png",
+  "size": 245760,
+  "mime_type": "image/png",
+  "saved_to": "/tmp/jtk-downloads/screenshot.png",
+  "status": "downloaded"
+}
+```
+
+Downloaded files are saved to a temporary directory at `/tmp/jtk-downloads/`.

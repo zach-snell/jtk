@@ -1,0 +1,81 @@
+---
+title: manage_worklogs
+description: MCP tool for managing time tracking worklogs on Jira issues.
+---
+
+Manage time tracking worklogs on Jira issues.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params | Permission |
+|--------|-------------|-----------------|-----------------|------------|
+| `list` | List worklogs | `issue_key` | `start_at`, `max_results` | BROWSE_PROJECTS |
+| `add` | Add a worklog | `issue_key`, `time_spent` | `started`, `comment` | ADD_COMMENTS |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `list` or `add` |
+| `issue_key` | string | **Required.** Jira issue key (e.g., `PROJ-123`) |
+| `time_spent` | string | Time spent (for `add`), e.g., `2h`, `1d`, `30m` |
+| `started` | string | Start datetime ISO 8601 (for `add`), e.g., `2024-01-15T09:00:00.000+0000`. Defaults to now |
+| `comment` | string | Worklog comment (for `add`) |
+| `start_at` | int | Pagination start index (for `list`) |
+| `max_results` | int | Maximum results to return (for `list`) |
+
+## Examples
+
+### List worklogs
+
+```json
+{
+  "action": "list",
+  "issue_key": "PROJ-123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "total": 2,
+  "worklogs": [
+    {
+      "id": "10001",
+      "author": "Jane Doe",
+      "time_spent": "2h",
+      "started": "2025-01-14T09:00:00.000+0000",
+      "comment": "API refactoring"
+    },
+    {
+      "id": "10002",
+      "author": "Bob Smith",
+      "time_spent": "30m",
+      "started": "2025-01-14T14:30:00.000+0000"
+    }
+  ]
+}
+```
+
+### Add a worklog
+
+```json
+{
+  "action": "add",
+  "issue_key": "PROJ-123",
+  "time_spent": "2h",
+  "comment": "Implemented OAuth token refresh"
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "10003",
+  "time_spent": "2h",
+  "started": "2025-01-15T10:00:00.000+0000",
+  "status": "worklog added"
+}
+```

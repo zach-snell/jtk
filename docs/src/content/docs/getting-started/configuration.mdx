@@ -1,0 +1,146 @@
+---
+title: Configuration
+description: Setting up authentication and MCP client configuration.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+## Authentication
+
+jtk supports two authentication methods: interactive login and environment variables.
+
+### Interactive Login
+
+```bash
+jtk auth
+```
+
+You will be prompted for:
+
+1. **Jira domain** — e.g., `mycompany` (for `mycompany.atlassian.net`)
+2. **Email address** — your Atlassian account email
+3. **API token** — from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+
+Credentials are saved to `~/.config/jtk/credentials.json` with restricted file permissions.
+
+Check your auth status:
+
+```bash
+jtk status
+```
+
+Log out and remove stored credentials:
+
+```bash
+jtk logout
+```
+
+### Environment Variables
+
+For CI/CD or ephemeral environments, set these environment variables:
+
+```bash
+export JIRA_DOMAIN="mycompany"
+export JIRA_EMAIL="me@example.com"
+export JIRA_API_TOKEN="ATATT3x..."
+```
+
+Environment variables take priority over stored credentials.
+
+### Credentials File Format
+
+```json
+{
+  "domain": "mycompany",
+  "email": "me@example.com",
+  "api_token": "ATATT3x...",
+  "saved_at": "2025-01-15T10:30:00Z"
+}
+```
+
+<Aside type="caution">
+Never commit credentials to version control. The `credentials.json` file is saved with `0600` permissions (owner read/write only).
+</Aside>
+
+## MCP Client Configuration
+
+To use jtk as an MCP server, configure your AI client:
+
+<Tabs>
+<TabItem label="Claude Desktop">
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "jtk": {
+      "command": "jtk",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+</TabItem>
+<TabItem label="Claude Code">
+```bash
+claude mcp add jtk -- jtk mcp
+```
+</TabItem>
+<TabItem label="Cursor">
+Add to `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "jtk": {
+      "command": "jtk",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+</TabItem>
+<TabItem label="Environment Variables">
+If you prefer environment variables over stored credentials:
+
+```json
+{
+  "mcpServers": {
+    "jtk": {
+      "command": "jtk",
+      "args": ["mcp"],
+      "env": {
+        "JIRA_DOMAIN": "mycompany",
+        "JIRA_EMAIL": "me@example.com",
+        "JIRA_API_TOKEN": "ATATT3x..."
+      }
+    }
+  }
+}
+```
+</TabItem>
+</Tabs>
+
+## Disabling Tools
+
+You can disable specific MCP tools via the `JIRA_DISABLED_TOOLS` environment variable:
+
+```bash
+export JIRA_DISABLED_TOOLS="manage_worklogs,manage_attachments"
+```
+
+Or in your MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "jtk": {
+      "command": "jtk",
+      "args": ["mcp"],
+      "env": {
+        "JIRA_DISABLED_TOOLS": "manage_worklogs,manage_attachments"
+      }
+    }
+  }
+}
+```

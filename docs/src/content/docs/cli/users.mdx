@@ -1,0 +1,65 @@
+---
+title: jtk users
+description: Search and inspect Jira users.
+---
+
+The `users` command group manages user lookups. Aliases: `user`, `u`.
+
+## jtk users me
+
+Get the currently authenticated user.
+
+```bash
+jtk users me
+jtk users me --json
+```
+
+**Example output:**
+
+```
+Jane Doe
+  Account ID:    5a0b1c2d3e4f5g6h7i8j
+  Email:         jane@example.com
+  Account Type:  atlassian
+  Active:        yes
+  Time Zone:     America/New_York
+  Locale:        en_US
+```
+
+## jtk users search
+
+Search for users by name or email.
+
+```bash
+jtk users search "jane"
+jtk users search "jane doe" --max 10
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--max` | `20` | Maximum results to return |
+
+**Example output:**
+
+```
+Account ID               Display Name   Email              Active
+5a0b1c2d3e4f5g6h7i8j    Jane Doe       jane@example.com   yes
+5b1c2d3e4f5g6h7i8j9k    Jane Smith     jsmith@example.com yes
+
+```
+
+## jtk users get
+
+Get a user by account ID.
+
+```bash
+jtk users get 5a0b1c2d3e4f5g6h7i8j
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `account-id` | User account ID (required) |

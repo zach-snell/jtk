@@ -1,0 +1,34 @@
+---
+title: jtk — Jira Toolkit
+description: A dual-mode Go CLI & MCP Server for Jira Cloud.
+template: splash
+hero:
+  tagline: The ultimate developer-focused Jira client. A single Go binary that works as both a CLI and an MCP server.
+  actions:
+    - text: Get Started
+      link: /jtk/getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/zach-snell/jtk
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+	<Card title="Dual Mode" icon="laptop">
+		One binary, two interfaces. Use `jtk` as a traditional CLI for quick terminal commands, or run `jtk mcp` to expose every capability to your AI agents via the Model Context Protocol.
+	</Card>
+	<Card title="Git-Aware" icon="github">
+		Auto-detects the Jira issue key from your current git branch. Run `jtk issues get` without arguments and it just works — `feature/PROJ-123-login` resolves to `PROJ-123`.
+	</Card>
+	<Card title="Token-Optimized" icon="rocket">
+		Built for AI agents. ResponseFlattener strips unnecessary nesting from Jira's verbose API responses. Output stays under token limits with `SafeJSON` truncation and rate limiting.
+	</Card>
+	<Card title="Permission-Aware" icon="seti:lock">
+		Dynamic tool registration based on your API token's actual permissions. Read-only tokens only expose read actions — no confusing error messages for your AI agent.
+	</Card>
+</CardGrid>

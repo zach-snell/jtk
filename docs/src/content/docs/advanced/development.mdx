@@ -1,0 +1,143 @@
+---
+title: Development
+description: Building from source, project structure, and contributing.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Prerequisites
+
+- **Go 1.26+** (managed via [mise](https://mise.jdx.dev))
+- **mise** for task management and Go version pinning
+
+## Building from Source
+
+```bash
+git clone https://github.com/zach-snell/jtk.git
+cd jtk
+
+# Install Go version via mise
+mise install
+
+# Build
+mise run build
+# → bin/jtk
+
+# Build and install to ~/.local/bin
+mise run install
+
+# Fast rebuild directly to ~/.local/bin (dev iteration)
+mise run link
+```
+
+## Project Structure
+
+```
+jtk/
+├── cmd/
+│   ├── jtk/              # main.go entry point
+│   └── cli/              # Cobra CLI commands
+│       ├── root.go       # Root command, global flags
+│       ├── auth.go       # auth, status, logout
+│       ├── issues.go     # issues get/search/create/transition/comment
+│       ├── boards.go     # boards list/sprints
+│       ├── projects.go   # projects list/get
+│       ├── users.go      # users me/search/get
+│       ├── worklogs.go   # worklogs list/add
+│       ├── versions.go   # versions list/get
+│       ├── mcp.go        # MCP server command
+│       ├── git.go        # Git branch issue key detection
+│       └── format.go     # Table formatting, output helpers
+├── internal/
+│   ├── jira/             # Jira API client
+│   │   ├── client.go     # HTTP client with rate limiting
+│   │   ├── types.go      # Jira API type definitions
+│   │   ├── flatten.go    # ResponseFlattener
+│   │   ├── auth.go       # Credential management
+│   │   └── git.go        # DetectIssueKey from branch
+│   ├── mcp/              # MCP server implementation
+│   │   ├── server.go     # Server setup, permission introspection
+│   │   ├── issues.go     # manage_issues handler
+│   │   ├── search.go     # manage_search handler
+│   │   ├── boards.go     # manage_boards handler
+│   │   ├── projects.go   # manage_projects handler
+│   │   ├── devinfo.go    # manage_devinfo handler
+│   │   ├── worklogs.go   # manage_worklogs handler
+│   │   ├── versions.go   # manage_versions handler
+│   │   ├── attachments.go# manage_attachments handler
+│   │   ├── users.go      # manage_users handler
+│   │   └── prompts.go    # MCP prompts
+│   └── version/          # Build version injection
+├── docs/                 # Astro Starlight documentation
+├── .mise.toml            # Task definitions
+├── .golangci.yml         # Linter config
+├── install.sh            # Install script
+├── go.mod
+└── go.sum
+```
+
+## Mise Tasks
+
+| Task | Description |
+|------|-------------|
+| `mise run build` | Build the jtk binary to `bin/jtk` |
+| `mise run dev` | Build and run in dev mode |
+| `mise run install` | Build and install to `~/.local/bin` |
+| `mise run link` | Fast rebuild to `~/.local/bin/jtk` |
+| `mise run lint` | Run golangci-lint |
+| `mise run test` | Run tests with race detector |
+| `mise run fmt` | Format code with gofumpt |
+| `mise run check` | Run fmt + lint + test |
+| `mise run clean` | Remove build artifacts |
+| `mise run docs:dev` | Run docs dev server |
+| `mise run docs:build` | Build docs for production |
+| `mise run docs:preview` | Preview production docs build |
+| `mise run docs:install` | Install docs dependencies |
+
+## Adding a New MCP Tool
+
+1. Create `internal/mcp/newtool.go` with an Args struct and handler function
+2. Register the tool in `internal/mcp/server.go` `registerTools()`
+3. Add corresponding CLI subcommands in `cmd/cli/` if applicable
+4. Add documentation page in `docs/src/content/docs/mcp/`
+5. Update the sidebar in `docs/astro.config.mjs`
+
+### Handler Pattern
+
+```go
+type ManageNewToolArgs struct {
+    Action string `json:"action" jsonschema:"Action to perform: 'list', 'get'"`
+    ID     string `json:"id,omitempty" jsonschema:"Resource ID"`
+}
+
+func ManageNewToolHandler(c *jira.Client) func(context.Context, *mcp.CallToolRequest, ManageNewToolArgs) (*mcp.CallToolResult, any, error) {
+    return func(ctx context.Context, req *mcp.CallToolRequest, args ManageNewToolArgs) (*mcp.CallToolResult, any, error) {
+        switch args.Action {
+        case "list":
+            // ...
+        case "get":
+            // ...
+        default:
+            return ToolResultError(fmt.Sprintf("unknown action: %s", args.Action)), nil, nil
+        }
+    }
+}
+```
+
+## Running Tests
+
+```bash
+mise run test
+```
+
+## Linting
+
+```bash
+mise run lint
+```
+
+Uses `golangci-lint` with the config in `.golangci.yml`.
+
+<Aside type="tip">
+Use `mise run check` before submitting changes — it runs formatting, linting, and tests in sequence.
+</Aside>

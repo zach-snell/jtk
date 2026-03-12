@@ -1,0 +1,67 @@
+---
+title: manage_versions
+description: MCP tool for listing and getting project versions (releases).
+---
+
+List and get project versions (releases/fixVersions).
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `list` | List project versions | `project_key` | |
+| `get` | Get version details | `version_id` | |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `list` or `get` |
+| `project_key` | string | Project key (for `list`) |
+| `version_id` | string | Version ID (for `get`) |
+
+## Examples
+
+### List versions
+
+```json
+{
+  "action": "list",
+  "project_key": "PROJ"
+}
+```
+
+**Response:**
+
+```json
+{
+  "total": 3,
+  "versions": [
+    {
+      "id": "10100",
+      "name": "v1.0.0",
+      "description": "Initial release",
+      "released": true,
+      "archived": false,
+      "release_date": "2024-12-01",
+      "start_date": "2024-11-01"
+    },
+    {
+      "id": "10101",
+      "name": "v2.0.0",
+      "released": false,
+      "archived": false,
+      "release_date": "2025-02-01"
+    }
+  ]
+}
+```
+
+### Get version details
+
+```json
+{
+  "action": "get",
+  "version_id": "10101"
+}
+```

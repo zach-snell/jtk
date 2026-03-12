@@ -1,0 +1,58 @@
+[tools]
+go = "1.26"
+
+[tasks.build]
+description = "Build the jtk binary"
+run = "go build -ldflags='-s -w' -o bin/jtk ./cmd/jtk"
+
+[tasks.dev]
+description = "Build and run in dev mode"
+run = "go run ./cmd/jtk"
+
+[tasks.lint]
+description = "Run linters"
+run = "golangci-lint run ./..."
+
+[tasks.test]
+description = "Run tests"
+run = "go test -race -count=1 ./..."
+
+[tasks.install]
+description = "Build and install jtk to ~/.local/bin"
+run = "./install.sh"
+
+[tasks.link]
+description = "Fast rebuild directly to ~/.local/bin/jtk for rapid iteration"
+run = "go build -ldflags='-s -w' -o ~/.local/bin/jtk ./cmd/jtk"
+
+[tasks.fmt]
+description = "Format code"
+run = "gofumpt -w ."
+
+[tasks.check]
+description = "Run all checks"
+depends = ["fmt", "lint", "test"]
+
+[tasks.clean]
+description = "Remove build artifacts"
+run = "rm -rf bin/"
+
+[tasks."docs:dev"]
+description = "Run docs dev server"
+dir = "docs"
+run = "pnpm dev"
+
+[tasks."docs:build"]
+description = "Build docs for production"
+dir = "docs"
+run = "pnpm build"
+
+[tasks."docs:preview"]
+description = "Preview production docs build"
+dir = "docs"
+run = "pnpm preview"
+
+[tasks."docs:install"]
+description = "Install docs dependencies"
+dir = "docs"
+run = "pnpm install"

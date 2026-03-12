@@ -1,0 +1,51 @@
+---
+title: jtk projects
+description: List and inspect Jira projects.
+---
+
+The `projects` command group manages project inspection. Aliases: `project`, `p`.
+
+## jtk projects list
+
+List all projects.
+
+```bash
+jtk projects list
+jtk projects list --json
+```
+
+**Example output:**
+
+```
+Key    Name                Type       Lead
+PROJ   My Project          software   Jane Doe
+DES    Design Team         software   Bob Smith
+PLAT   Platform            software   Alice Johnson
+
+Showing 3 of 3 results
+```
+
+## jtk projects get
+
+Get detailed project information.
+
+```bash
+jtk projects get PROJ
+jtk projects get PROJ --json
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `project-key` | Project key (required) |
+
+**Example output:**
+
+```
+PROJ: My Project
+  Type:         software
+  Lead:         Jane Doe
+  Description:  Main product development project
+  Issue Types:  Story, Bug, Task, Epic, Sub-task
+```

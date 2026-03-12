@@ -1,0 +1,90 @@
+---
+title: manage_boards
+description: MCP tool for managing Jira agile boards and sprints.
+---
+
+Manage Jira agile boards and sprints.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `list_boards` | List all boards | | `project_key`, `start_at`, `max_results` |
+| `get_board` | Get board details | `board_id` | |
+| `list_sprints` | List sprints for a board | `board_id` | `state`, `start_at`, `max_results` |
+| `get_sprint_issues` | Get issues in a sprint | `sprint_id` | `start_at`, `max_results` |
+| `get_backlog` | Get board backlog | `board_id` | `start_at`, `max_results` |
+| `get_active_sprint` | Get the active sprint | `board_id` | |
+| `search_sprints` | Search sprints by name | `board_id`, `query` | |
+| `create_sprint` | Create a new sprint | `board_id`, `name` | `start_date`, `end_date`, `goal` |
+| `move_to_sprint` | Move issues to a sprint | `sprint_id`, `issue_keys` | |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** Action to perform |
+| `project_key` | string | Filter boards by project key (for `list_boards`) |
+| `board_id` | int | Board ID |
+| `sprint_id` | int | Sprint ID |
+| `state` | string | Sprint state filter: `active`, `future`, `closed` (for `list_sprints`) |
+| `query` | string | Sprint name search query (for `search_sprints`) |
+| `name` | string | Sprint name (for `create_sprint`) |
+| `start_date` | string | Sprint start date ISO 8601 (for `create_sprint`) |
+| `end_date` | string | Sprint end date ISO 8601 (for `create_sprint`) |
+| `goal` | string | Sprint goal (for `create_sprint`) |
+| `issue_keys` | string | Comma-separated issue keys (for `move_to_sprint`) |
+| `start_at` | int | Pagination start index |
+| `max_results` | int | Maximum results to return |
+
+## Examples
+
+### List boards for a project
+
+```json
+{
+  "action": "list_boards",
+  "project_key": "PROJ"
+}
+```
+
+### Get active sprint
+
+```json
+{
+  "action": "get_active_sprint",
+  "board_id": 42
+}
+```
+
+### Get sprint issues
+
+```json
+{
+  "action": "get_sprint_issues",
+  "sprint_id": 101
+}
+```
+
+### Create a sprint
+
+```json
+{
+  "action": "create_sprint",
+  "board_id": 42,
+  "name": "Sprint 16",
+  "start_date": "2025-01-28T09:00:00.000Z",
+  "end_date": "2025-02-11T09:00:00.000Z",
+  "goal": "Ship OAuth and fix regressions"
+}
+```
+
+### Move issues to a sprint
+
+```json
+{
+  "action": "move_to_sprint",
+  "sprint_id": 101,
+  "issue_keys": "PROJ-200,PROJ-201,PROJ-202"
+}
+```

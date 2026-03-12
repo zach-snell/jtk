@@ -1,0 +1,68 @@
+---
+title: Git Integration
+description: How jtk auto-detects Jira issue keys from your git branch.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Branch Detection
+
+Several jtk commands auto-detect the Jira issue key from your current git branch. If you omit the issue key argument, jtk extracts it from the branch name.
+
+### Commands with auto-detection
+
+- `jtk issues get`
+- `jtk issues transition <transition-name>`
+- `jtk issues comment <comment-text>`
+- `jtk worklogs list`
+- `jtk worklogs add`
+
+### How it works
+
+jtk calls `git rev-parse --abbrev-ref HEAD` to get the current branch name, then uses a regex to find a Jira issue key pattern (`[A-Z]+-\d+`).
+
+### Supported branch patterns
+
+| Branch Name | Detected Key |
+|-------------|-------------|
+| `feature/PROJ-123-add-login` | `PROJ-123` |
+| `bugfix/PROJ-456-fix-crash` | `PROJ-456` |
+| `PROJ-789` | `PROJ-789` |
+| `PROJ-100-quick-fix` | `PROJ-100` |
+| `feat/ABC-42-oauth` | `ABC-42` |
+| `hotfix/DEV-1-urgent` | `DEV-1` |
+
+### Unsupported patterns
+
+| Branch Name | Result |
+|-------------|--------|
+| `main` | Error: no issue key found |
+| `develop` | Error: no issue key found |
+| `feature/add-login` | Error: no issue key found |
+| `123-no-project` | Error: no issue key found |
+
+## Workflow Example
+
+```bash
+# Create a branch with a Jira key
+git checkout -b feature/PROJ-123-add-oauth
+
+# All of these auto-detect PROJ-123:
+jtk issues get
+jtk issues transition "In Progress"
+jtk worklogs add --time 2h
+jtk issues comment "Started implementation"
+```
+
+<Aside type="note">
+The issue key must follow the standard Jira pattern: one or more uppercase letters, a dash, and one or more digits (e.g., `PROJ-123`, `AB-1`). The key can appear anywhere in the branch name.
+</Aside>
+
+## Explicit Override
+
+You can always provide an explicit issue key to override auto-detection:
+
+```bash
+# Even on branch feature/PROJ-123-something, this gets PROJ-456:
+jtk issues get PROJ-456
+```

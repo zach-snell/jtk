@@ -1,0 +1,79 @@
+---
+title: manage_search
+description: MCP tool for searching Jira issues using JQL or quick text search.
+---
+
+Search Jira issues using JQL or quick text search.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `jql` | Search using JQL query | `jql` | `start_at`, `max_results` |
+| `quick` | Quick text search | `text` | `project_key`, `max_results` |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `jql` or `quick` |
+| `jql` | string | JQL query string (for `jql` action) |
+| `text` | string | Search text (for `quick` action) |
+| `project_key` | string | Optional project key to scope the search |
+| `start_at` | int | Pagination start index |
+| `max_results` | int | Maximum results to return (default 20) |
+
+## Examples
+
+### JQL search
+
+```json
+{
+  "action": "jql",
+  "jql": "project = PROJ AND status = 'In Progress' ORDER BY updated DESC",
+  "max_results": 10
+}
+```
+
+### Quick text search
+
+```json
+{
+  "action": "quick",
+  "text": "login button",
+  "project_key": "PROJ"
+}
+```
+
+## Response Format
+
+Both actions return a flattened response:
+
+```json
+{
+  "total": 42,
+  "start_at": 0,
+  "max_results": 20,
+  "issues": [
+    {
+      "key": "PROJ-123",
+      "summary": "Fix login button on mobile",
+      "status": "In Progress",
+      "type": "Bug",
+      "priority": "High",
+      "assignee": "Jane Doe",
+      "updated": "2025-01-14T16:45:00.000+0000"
+    }
+  ]
+}
+```
+
+## Common JQL Queries
+
+| Query | Description |
+|-------|-------------|
+| `assignee = currentUser()` | Your assigned issues |
+| `project = PROJ AND sprint in openSprints()` | Current sprint issues |
+| `project = PROJ AND updated >= -1d` | Recently updated |
+| `project = PROJ AND fixVersion = "v2.0"` | Issues in a release |
+| `status changed to "Done" after -7d` | Completed this week |

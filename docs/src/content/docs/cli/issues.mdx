@@ -1,0 +1,107 @@
+---
+title: jtk issues
+description: Manage Jira issues from the command line.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The `issues` command group manages Jira issues. Aliases: `issue`, `i`.
+
+## jtk issues get
+
+Get details for a specific issue. Auto-detects from git branch if omitted.
+
+```bash
+jtk issues get PROJ-123
+jtk issues get              # auto-detect from branch
+jtk issues get PROJ-123 --json
+```
+
+**Example output:**
+
+```
+PROJ-123: Fix login button on mobile
+  Status:      In Progress
+  Type:        Bug
+  Priority:    High
+  Assignee:    Jane Doe
+  Reporter:    Bob Smith
+  Project:     PROJ — My Project
+  Labels:      mobile, urgent
+  Sprint:      Sprint 15
+  Description: The login button is unresponsive on...
+  Created:     2025-01-10 09:30
+  Updated:     2025-01-14 16:45
+```
+
+## jtk issues search
+
+Search issues using JQL.
+
+```bash
+jtk issues search "project = PROJ AND status = 'In Progress'"
+jtk issues search "assignee = currentUser() ORDER BY updated DESC"
+jtk issues search "sprint in openSprints()" --max 50
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--max` | `20` | Maximum results to return |
+
+**Example output:**
+
+```
+Key       Summary                          Status        Type   Priority  Assignee
+PROJ-123  Fix login button on mobile       In Progress   Bug    High      Jane Doe
+PROJ-124  Add OAuth 2.0 support            In Progress   Story  Medium    Bob Smith
+PROJ-125  Update API documentation         To Do         Task   Low       Unassigned
+
+Showing 3 of 3 results
+```
+
+## jtk issues create
+
+Create a new issue.
+
+```bash
+jtk issues create -P PROJ -s "Fix broken pagination" -t Bug
+jtk issues create -P PROJ -s "Add dark mode" -t Story -d "Implement dark mode toggle" --priority High
+jtk issues create -P PROJ -s "Subtask item" --parent PROJ-100 --labels "backend,api"
+```
+
+**Flags:**
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--project` | `-P` | *required* | Project key |
+| `--summary` | `-s` | *required* | Issue summary/title |
+| `--type` | `-t` | `Task` | Issue type: Story, Bug, Task, Epic, Sub-task |
+| `--description` | `-d` | | Issue description |
+| `--priority` | | | Priority: Highest, High, Medium, Low, Lowest |
+| `--assignee` | | | Assignee account ID |
+| `--parent` | | | Parent issue key (for sub-tasks) |
+| `--labels` | | | Comma-separated labels |
+
+## jtk issues transition
+
+Transition an issue to a new state. Auto-detects issue key from git branch.
+
+```bash
+jtk issues transition PROJ-123 "In Progress"
+jtk issues transition "Done"        # auto-detect issue from branch
+```
+
+<Aside type="tip">
+Transition names are matched by name, not ID. Use the exact name as it appears in your Jira workflow (e.g., "In Progress", "Done", "Code Review").
+</Aside>
+
+## jtk issues comment
+
+Add a comment to an issue. Auto-detects issue key from git branch.
+
+```bash
+jtk issues comment PROJ-123 "Fixed in commit abc123"
+jtk issues comment "Starting work on this"  # auto-detect issue from branch
+```

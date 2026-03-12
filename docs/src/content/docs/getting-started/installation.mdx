@@ -1,0 +1,79 @@
+---
+title: Installation
+description: How to install jtk on macOS and Linux.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Install Script (Recommended)
+
+The install script downloads the latest release binary to `~/.local/bin`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zach-snell/jtk/main/install.sh | bash
+```
+
+Make sure `~/.local/bin` is in your `PATH`:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+## Go Install
+
+If you have Go installed:
+
+```bash
+go install github.com/zach-snell/jtk/cmd/jtk@latest
+```
+
+## Build from Source
+
+<Tabs>
+<TabItem label="macOS">
+```bash
+git clone https://github.com/zach-snell/jtk.git
+cd jtk
+mise run build
+# Binary is at bin/jtk
+```
+</TabItem>
+<TabItem label="Linux">
+```bash
+git clone https://github.com/zach-snell/jtk.git
+cd jtk
+mise run build
+# Binary is at bin/jtk
+```
+</TabItem>
+</Tabs>
+
+The `mise run build` command runs:
+
+```bash
+go build -ldflags='-s -w' -o bin/jtk ./cmd/jtk
+```
+
+To build and install directly to `~/.local/bin`:
+
+```bash
+mise run install
+```
+
+Or for rapid iteration during development:
+
+```bash
+mise run link
+```
+
+## Verify Installation
+
+```bash
+jtk --version
+```
+
+You should see output like:
+
+```
+jtk version v0.1.0
+```

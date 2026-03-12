@@ -1,0 +1,86 @@
+---
+title: manage_devinfo
+description: MCP tool for getting development information (branches, PRs, commits) linked to Jira issues.
+---
+
+Get development information (branches, PRs, commits) linked to a Jira issue.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `get_dev_info` | Get dev info for an issue | `issue_key` | `include_branches`, `include_pull_requests`, `include_commits`, `include_builds` |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `get_dev_info` |
+| `issue_key` | string | **Required.** Jira issue key (e.g., `PROJ-123`) |
+| `include_branches` | bool | Include branches (default: `true`) |
+| `include_pull_requests` | bool | Include pull requests (default: `true`) |
+| `include_commits` | bool | Include commits (default: `true`) |
+| `include_builds` | bool | Include builds (default: `true`) |
+
+## Examples
+
+### Get all dev info
+
+```json
+{
+  "action": "get_dev_info",
+  "issue_key": "PROJ-123"
+}
+```
+
+### Get only PRs and branches
+
+```json
+{
+  "action": "get_dev_info",
+  "issue_key": "PROJ-123",
+  "include_pull_requests": true,
+  "include_branches": true,
+  "include_commits": false,
+  "include_builds": false
+}
+```
+
+## Response
+
+The response includes development data from connected source providers (GitHub, Bitbucket, GitLab, etc.):
+
+```json
+{
+  "issue_key": "PROJ-123",
+  "branches": [
+    {
+      "name": "feature/PROJ-123-oauth",
+      "repository": "my-app",
+      "last_commit": {
+        "message": "Add OAuth token refresh",
+        "author": "jane",
+        "date": "2025-01-14T16:00:00Z"
+      }
+    }
+  ],
+  "pull_requests": [
+    {
+      "title": "feat: Add OAuth 2.0 support",
+      "status": "OPEN",
+      "url": "https://github.com/org/repo/pull/42",
+      "author": "jane",
+      "reviewers": ["bob"]
+    }
+  ],
+  "commits": [
+    {
+      "message": "Add OAuth token refresh",
+      "author": "jane",
+      "date": "2025-01-14T16:00:00Z"
+    }
+  ]
+}
+```
+
+This data comes from Jira's Dev Info API, which aggregates information from connected development tools. Your Jira instance must have a source code integration configured (GitHub, Bitbucket, GitLab, etc.) for this to return data.

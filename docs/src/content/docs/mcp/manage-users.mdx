@@ -1,0 +1,82 @@
+---
+title: manage_users
+description: MCP tool for searching and getting Jira users.
+---
+
+Search and get Jira users.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `get_current` | Get the authenticated user | | |
+| `search` | Search users by name/email | `query` | `max_results` |
+| `get` | Get user by account ID | `account_id` | |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `get_current`, `search`, or `get` |
+| `query` | string | Search query — display name, email, etc. (for `search`) |
+| `account_id` | string | User account ID (for `get`) |
+| `max_results` | int | Maximum results to return (for `search`, default 20) |
+
+## Examples
+
+### Get current user
+
+```json
+{
+  "action": "get_current"
+}
+```
+
+**Response:**
+
+```json
+{
+  "account_id": "5a0b1c2d3e4f5g6h7i8j",
+  "display_name": "Jane Doe",
+  "email": "jane@example.com",
+  "account_type": "atlassian",
+  "active": true,
+  "time_zone": "America/New_York",
+  "locale": "en_US"
+}
+```
+
+### Search users
+
+```json
+{
+  "action": "search",
+  "query": "jane",
+  "max_results": 5
+}
+```
+
+**Response:**
+
+```json
+{
+  "total": 2,
+  "users": [
+    {
+      "account_id": "5a0b1c2d3e4f5g6h7i8j",
+      "display_name": "Jane Doe",
+      "email": "jane@example.com",
+      "active": true
+    }
+  ]
+}
+```
+
+### Get user by ID
+
+```json
+{
+  "action": "get",
+  "account_id": "5a0b1c2d3e4f5g6h7i8j"
+}
+```

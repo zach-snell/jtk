@@ -1,0 +1,96 @@
+---
+title: Security
+description: How jtk handles credentials, permissions, and data security.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Credential Storage
+
+### File-based credentials
+
+When you run `jtk auth`, credentials are saved to:
+
+```
+~/.config/jtk/credentials.json
+```
+
+- File permissions are set to `0600` (owner read/write only)
+- The file contains your Jira domain, email, and API token
+- Tokens are stored in plaintext — protect this file as you would any secret
+
+### Environment variables
+
+For CI/CD or ephemeral environments:
+
+```bash
+export JIRA_DOMAIN="mycompany"
+export JIRA_EMAIL="me@example.com"
+export JIRA_API_TOKEN="ATATT3x..."
+```
+
+Environment variables take priority over stored credentials.
+
+<Aside type="caution">
+Never commit credentials to version control. Add `credentials.json` to your `.gitignore`.
+</Aside>
+
+## API Token Permissions
+
+jtk uses Jira Cloud's API token authentication (Basic Auth with email + API token). The token inherits the permissions of the associated Atlassian account.
+
+Create tokens at: https://id.atlassian.com/manage-profile/security/api-tokens
+
+### Principle of Least Privilege
+
+For MCP server usage, consider creating a dedicated Jira account with only the permissions your AI agent needs:
+
+- **Read-only use** — grant only `BROWSE_PROJECTS` permission
+- **Standard use** — add `CREATE_ISSUES`, `ADD_COMMENTS`, `TRANSITION_ISSUES`
+- **Full access** — add `EDIT_ISSUES`, `ASSIGN_ISSUES`, `DELETE_ISSUES`, `LINK_ISSUES`
+
+jtk's dynamic permission introspection ensures only permitted actions are exposed.
+
+## Permission-Aware Tool Registration
+
+On startup, the MCP server checks your token's permissions via:
+
+```
+GET /rest/api/3/mypermissions
+```
+
+Write actions are only included in tool descriptions if the token has the corresponding permission. This prevents:
+
+- AI agents attempting operations that would fail
+- Wasted API calls and tokens
+- Confusing error messages
+
+## Data Flow
+
+```
+AI Agent ←→ jtk (local) ←→ Jira Cloud API (HTTPS)
+```
+
+- All data stays on your machine (or wherever jtk runs)
+- jtk communicates with Jira Cloud over HTTPS only
+- No telemetry, analytics, or third-party data sharing
+- MCP stdio transport is local-only (no network exposure)
+- HTTP Streamable transport (`--port`) binds to localhost by default
+
+## Rate Limiting
+
+jtk includes built-in rate limiting to:
+
+- Prevent overwhelming the Jira Cloud API
+- Avoid 429 (Too Many Requests) responses
+- Protect against runaway AI agent loops
+
+## Tool Disabling
+
+Reduce attack surface by disabling unnecessary tools:
+
+```bash
+export JIRA_DISABLED_TOOLS="manage_attachments,manage_worklogs"
+```
+
+This completely removes the tools from the MCP server — they won't appear in tool listings or be callable.

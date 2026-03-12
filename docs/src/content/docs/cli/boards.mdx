@@ -1,0 +1,66 @@
+---
+title: jtk boards
+description: Manage Jira agile boards and sprints.
+---
+
+The `boards` command group manages agile boards. Aliases: `board`, `b`.
+
+## jtk boards list
+
+List agile boards.
+
+```bash
+jtk boards list
+jtk boards list --project PROJ
+jtk boards list --json
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--project` | Filter boards by project key |
+
+**Example output:**
+
+```
+ID    Name                Type     Project
+42    PROJ Board          scrum    PROJ
+43    Design Board        kanban   DES
+44    Platform Sprint     scrum    PLAT
+
+Showing 3 of 3 results
+```
+
+## jtk boards sprints
+
+List sprints for a board.
+
+```bash
+jtk boards sprints 42
+jtk boards sprints 42 --state active
+jtk boards sprints 42 --state future
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `board-id` | Board ID (required) |
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--state` | Filter by sprint state: `active`, `future`, `closed` |
+
+**Example output:**
+
+```
+ID    Name        State    Start             End               Goal
+100   Sprint 14   closed   2025-01-01 09:00  2025-01-14 09:00  Ship v2.0
+101   Sprint 15   active   2025-01-14 09:00  2025-01-28 09:00  OAuth + bug fixes
+102   Sprint 16   future   -                 -                 TBD
+
+Showing 3 of 3 results
+```

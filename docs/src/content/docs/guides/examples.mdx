@@ -1,0 +1,110 @@
+---
+title: Usage Examples
+description: Real workflow examples using jtk CLI and MCP tools.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## CLI Workflows
+
+### Create a bug report from the terminal
+
+```bash
+jtk issues create \
+  -P PROJ \
+  -s "Login button unresponsive on mobile Safari" \
+  -t Bug \
+  --priority High \
+  --labels "mobile,safari,regression"
+```
+
+### Search for your open issues
+
+```bash
+jtk issues search "assignee = currentUser() AND status != Done ORDER BY priority DESC"
+```
+
+### Check sprint progress
+
+```bash
+# Find your board
+jtk boards list --project PROJ
+
+# List active sprints
+jtk boards sprints 42 --state active
+```
+
+### Log time from your branch
+
+```bash
+# On branch feature/PROJ-123-oauth
+jtk worklogs add --time 2h --comment "Implemented token refresh"
+```
+
+### Get issue details as JSON for scripting
+
+```bash
+jtk issues get PROJ-123 --json | jq '.fields.status.name'
+```
+
+### Quick status transition
+
+```bash
+# On branch feature/PROJ-123-oauth
+jtk issues transition "In Progress"
+
+# Later...
+jtk issues transition "Code Review"
+```
+
+## MCP Workflows
+
+These examples show what an AI agent can do when jtk is configured as an MCP server.
+
+### Sprint Planning Assistant
+
+> **You:** What's left in the current sprint for board 42? Are we on track?
+
+The AI will:
+1. Call `manage_boards` with `get_active_sprint` to find the active sprint
+2. Call `manage_boards` with `get_sprint_issues` to get all issues
+3. Summarize progress by status category
+
+### Bug Triage
+
+> **You:** Create a high-priority bug in PROJ: "API returns 500 when email contains a plus sign". Assign it to the user with email jane@example.com.
+
+The AI will:
+1. Call `manage_users` with `search` to find Jane's account ID
+2. Call `manage_issues` with `create` including the assignee_id
+
+### Development Status Check
+
+> **You:** What's the dev status of PROJ-100? Are there any open PRs?
+
+The AI will:
+1. Call `manage_issues` with `get` to get issue details
+2. Call `manage_devinfo` with `get_dev_info` to get branches, PRs, commits
+3. Highlight any open PRs needing review
+
+### Release Notes Generation
+
+> **You:** Generate release notes for PROJ version v2.0.0
+
+The AI will use the `release_notes` prompt, which:
+1. Searches for all issues with `fixVersion = "v2.0.0"`
+2. Groups by issue type
+3. Formats as professional release notes
+
+### Cross-Issue Analysis
+
+> **You:** Find all bugs in PROJ that were created this week and show me the dev info for each.
+
+The AI will:
+1. Call `manage_search` with JQL: `project = PROJ AND issuetype = Bug AND created >= -7d`
+2. For each result, call `manage_devinfo` with `get_dev_info`
+3. Present a summary table
+
+<Aside type="tip">
+When using MCP, the AI agent has access to all 10 tools simultaneously. It can chain operations naturally — search for issues, get details, check dev info, and create comments — all in a single conversation.
+</Aside>

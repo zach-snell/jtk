@@ -1,0 +1,55 @@
+---
+title: jtk worklogs
+description: Manage time tracking worklogs on issues.
+---
+
+The `worklogs` command group manages time tracking. Aliases: `worklog`, `wl`.
+
+Both subcommands auto-detect the issue key from your current git branch if omitted.
+
+## jtk worklogs list
+
+List worklogs for an issue.
+
+```bash
+jtk worklogs list PROJ-123
+jtk worklogs list              # auto-detect from branch
+jtk worklogs list --json
+```
+
+**Example output:**
+
+```
+ID      Author      Time Spent   Started
+10001   Jane Doe    2h           2025-01-14 09:00
+10002   Bob Smith   30m          2025-01-14 14:30
+
+Showing 2 of 2 results
+```
+
+## jtk worklogs add
+
+Add a worklog entry to an issue.
+
+```bash
+jtk worklogs add PROJ-123 --time 2h
+jtk worklogs add --time 1d --comment "Full day on API refactor"
+jtk worklogs add PROJ-123 --time 30m --started "2025-01-15T09:00:00.000+0000"
+```
+
+**Flags:**
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--time` | `-t` | *required* | Time spent (e.g., `2h`, `1d`, `30m`) |
+| `--started` | | now | Start datetime (ISO 8601) |
+| `--comment` | `-c` | | Worklog comment |
+
+**Example output:**
+
+```
+Worklog added to PROJ-123
+  ID:          10003
+  Time Spent:  2h
+  Started:     2025-01-15 09:00
+```

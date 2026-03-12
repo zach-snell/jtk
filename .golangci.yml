@@ -1,0 +1,38 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - staticcheck
+    - gosec
+    - govet
+    - revive
+    - errcheck
+    - ineffassign
+    - unused
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+
+linters-settings:
+  gocyclo:
+    min-complexity: 40
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - hugeParam  # MCP handler signature requires value type
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - gocyclo

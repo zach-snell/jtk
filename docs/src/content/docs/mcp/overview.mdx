@@ -1,0 +1,77 @@
+---
+title: MCP Overview
+description: How jtk's MCP server works and an overview of all tools.
+---
+
+import { Card, CardGrid, LinkCard, Aside } from '@astrojs/starlight/components';
+
+## Starting the MCP Server
+
+```bash
+# stdio transport (default, for Claude Desktop / Cursor)
+jtk mcp
+
+# HTTP Streamable transport on a specific port
+jtk mcp --port 8080
+```
+
+The server advertises itself as `jtk` with the current version.
+
+## Transport Modes
+
+| Mode | Command | Use Case |
+|------|---------|----------|
+| stdio | `jtk mcp` | Local MCP clients (Claude Desktop, Cursor, Claude Code) |
+| HTTP Streamable | `jtk mcp --port 8080` | Remote or web-based clients |
+
+## Dynamic Permission Introspection
+
+On startup, jtk calls the Jira `mypermissions` API to check what your token can do. It then dynamically adjusts the tool descriptions and available actions:
+
+- **Read-only token** — write actions (`create`, `update`, `delete`, etc.) are excluded from tool descriptions
+- **Full-access token** — all actions are listed
+- **Partial permissions** — only permitted actions appear
+
+This prevents AI agents from attempting operations that would fail, saving tokens and avoiding confusion.
+
+Permissions checked:
+
+| Permission | Enables |
+|------------|---------|
+| `BROWSE_PROJECTS` | All read operations |
+| `CREATE_ISSUES` | `create` action on `manage_issues` |
+| `EDIT_ISSUES` | `update` action on `manage_issues` |
+| `ASSIGN_ISSUES` | `assign` action on `manage_issues` |
+| `TRANSITION_ISSUES` | `transition` action on `manage_issues` |
+| `ADD_COMMENTS` | `add_comment` on `manage_issues`, `add` on `manage_worklogs` |
+| `DELETE_ISSUES` | `delete` action on `manage_issues` |
+| `LINK_ISSUES` | `link` action on `manage_issues` |
+
+## Tool Overview
+
+jtk registers 10 multiplexed tools. Each tool accepts an `action` parameter that determines the operation.
+
+<CardGrid>
+	<LinkCard title="manage_issues" description="get, create, update, assign, transition, comment, delete, link, history, types" href="/jtk/mcp/manage-issues/" />
+	<LinkCard title="manage_search" description="JQL search and quick text search" href="/jtk/mcp/manage-search/" />
+	<LinkCard title="manage_boards" description="boards, sprints, backlog, active sprint" href="/jtk/mcp/manage-boards/" />
+	<LinkCard title="manage_projects" description="list, get, list statuses" href="/jtk/mcp/manage-projects/" />
+	<LinkCard title="manage_devinfo" description="branches, PRs, commits linked to issues" href="/jtk/mcp/manage-devinfo/" />
+	<LinkCard title="manage_worklogs" description="list and add time tracking entries" href="/jtk/mcp/manage-worklogs/" />
+	<LinkCard title="manage_versions" description="project versions and releases" href="/jtk/mcp/manage-versions/" />
+	<LinkCard title="manage_attachments" description="list and download attachments" href="/jtk/mcp/manage-attachments/" />
+	<LinkCard title="manage_users" description="current user, search, get by ID" href="/jtk/mcp/manage-users/" />
+	<LinkCard title="Prompts" description="standup_report, sprint_status, release_notes, dev_tree" href="/jtk/mcp/prompts/" />
+</CardGrid>
+
+<Aside type="tip">
+All MCP tool responses use a **ResponseFlattener** that strips unnecessary nesting and verbose metadata from Jira's API responses. Output is truncated via `SafeJSON` to stay within token limits (typically 30,000 characters).
+</Aside>
+
+## Disabling Tools
+
+Set `JIRA_DISABLED_TOOLS` as a comma-separated list of tool names to exclude:
+
+```bash
+export JIRA_DISABLED_TOOLS="manage_worklogs,manage_attachments"
+```

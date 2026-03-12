@@ -1,0 +1,98 @@
+---
+title: manage_projects
+description: MCP tool for listing and inspecting Jira projects and statuses.
+---
+
+List and get Jira project details and statuses.
+
+## Actions
+
+| Action | Description | Required Params | Optional Params |
+|--------|-------------|-----------------|-----------------|
+| `list` | List all projects | | `start_at`, `max_results` |
+| `get` | Get project details | `project_key` | |
+| `list_statuses` | List statuses by issue type | `project_key` | |
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `action` | string | **Required.** `list`, `get`, or `list_statuses` |
+| `project_key` | string | Project key or ID (for `get`, `list_statuses`) |
+| `start_at` | int | Pagination start index (for `list`) |
+| `max_results` | int | Maximum results to return (for `list`) |
+
+## Examples
+
+### List all projects
+
+```json
+{
+  "action": "list"
+}
+```
+
+**Response:**
+
+```json
+{
+  "total": 3,
+  "projects": [
+    {
+      "key": "PROJ",
+      "name": "My Project",
+      "project_type": "software",
+      "lead": "Jane Doe"
+    }
+  ]
+}
+```
+
+### Get project details
+
+```json
+{
+  "action": "get",
+  "project_key": "PROJ"
+}
+```
+
+**Response:**
+
+```json
+{
+  "key": "PROJ",
+  "name": "My Project",
+  "description": "Main product development",
+  "project_type": "software",
+  "lead": "Jane Doe",
+  "issue_types": ["Story", "Bug", "Task", "Epic", "Sub-task"]
+}
+```
+
+### List statuses
+
+```json
+{
+  "action": "list_statuses",
+  "project_key": "PROJ"
+}
+```
+
+**Response:**
+
+```json
+{
+  "total": 2,
+  "issue_types": [
+    {
+      "issue_type": "Story",
+      "statuses": [
+        { "id": "1", "name": "To Do", "category": "To Do" },
+        { "id": "2", "name": "In Progress", "category": "In Progress" },
+        { "id": "3", "name": "Done", "category": "Done" }
+      ]
+    }
+  ]
+}
+```

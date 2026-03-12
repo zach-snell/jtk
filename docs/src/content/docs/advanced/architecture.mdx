@@ -1,0 +1,158 @@
+---
+title: Architecture
+description: Technical architecture of jtk — tool multiplexing, response flattening, and permission introspection.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+jtk is structured as a single Go binary with two entry points:
+
+```
+cmd/jtk/main.go
+  └─ cmd/cli/root.go (Cobra CLI)
+       ├─ auth, status, logout
+       ├─ issues (get, search, create, transition, comment)
+       ├─ boards (list, sprints)
+       ├─ projects (list, get)
+       ├─ users (me, search, get)
+       ├─ worklogs (list, add)
+       ├─ versions (list, get)
+       └─ mcp (starts MCP server)
+
+internal/
+  ├─ jira/      # HTTP client, types, flattener, auth
+  ├─ mcp/       # MCP tool handlers, prompts
+  └─ version/   # Build version injection
+```
+
+## Tool Multiplexing
+
+Instead of registering individual MCP tools for each operation (which would create 40+ tools), jtk uses a **multiplexed pattern**. Each tool accepts an `action` parameter that dispatches to the appropriate handler.
+
+```
+manage_issues
+  ├─ get
+  ├─ create
+  ├─ update
+  ├─ assign
+  ├─ transition
+  ├─ add_comment
+  ├─ list_comments
+  ├─ delete
+  ├─ link
+  ├─ get_links
+  ├─ get_history
+  └─ list_types
+```
+
+This reduces the tool count from ~40 to 10, which is important because:
+
+1. **Token efficiency** — fewer tools means less token overhead in the system prompt
+2. **Model comprehension** — AI models handle 10 tools better than 40
+3. **Logical grouping** — related actions are naturally co-located
+
+Each multiplexed handler is implemented as a Go generic function:
+
+```go
+func addTool[In any](
+    s *mcp.Server,
+    disabled map[string]bool,
+    tool mcp.Tool,
+    handler func(context.Context, *mcp.CallToolRequest, In) (*mcp.CallToolResult, any, error),
+)
+```
+
+## Response Flattening
+
+Jira's REST API returns deeply nested JSON responses with many fields that are irrelevant for AI consumption. jtk's `ResponseFlattener` transforms these into flat, token-efficient structures.
+
+**Before (raw Jira API):**
+
+```json
+{
+  "id": "10001",
+  "self": "https://mycompany.atlassian.net/rest/api/3/issue/10001",
+  "key": "PROJ-123",
+  "fields": {
+    "summary": "Fix login",
+    "status": {
+      "self": "https://...",
+      "id": "3",
+      "name": "In Progress",
+      "statusCategory": {
+        "self": "https://...",
+        "id": 4,
+        "key": "indeterminate",
+        "colorName": "blue",
+        "name": "In Progress"
+      }
+    },
+    "assignee": {
+      "self": "https://...",
+      "accountId": "5abc...",
+      "emailAddress": "jane@example.com",
+      "avatarUrls": { "48x48": "...", "24x24": "...", "16x16": "...", "32x32": "..." },
+      "displayName": "Jane Doe",
+      "active": true,
+      "timeZone": "America/New_York",
+      "accountType": "atlassian"
+    }
+  }
+}
+```
+
+**After (jtk flattened):**
+
+```json
+{
+  "key": "PROJ-123",
+  "summary": "Fix login",
+  "status": "In Progress",
+  "assignee": "Jane Doe"
+}
+```
+
+The flattened response is typically 5-10x smaller, dramatically reducing token consumption.
+
+## SafeJSON Truncation
+
+All MCP tool responses pass through `SafeJSON(data, maxBytes)` which:
+
+1. Marshals to JSON
+2. Truncates at `maxBytes` if necessary (typically 30,000 characters)
+3. Appends a `"...[truncated]"` marker if truncated
+
+This prevents a single large response from consuming the AI's entire context window.
+
+## Dynamic Permission Introspection
+
+On MCP server startup, jtk calls the Jira `mypermissions` API to check the token's capabilities:
+
+```
+GET /rest/api/3/mypermissions?permissions=BROWSE_PROJECTS,CREATE_ISSUES,...
+```
+
+Based on the response, write actions are conditionally included in tool descriptions:
+
+```go
+issueActions := "'get', 'list_types', 'get_links', 'get_history'"
+if perms["CREATE_ISSUES"] {
+    issueActions += ", 'create'"
+}
+if perms["EDIT_ISSUES"] {
+    issueActions += ", 'update'"
+}
+// ...
+```
+
+This means an AI agent connected to a read-only token will never see `create` or `delete` as available actions — preventing wasted tool calls that would fail.
+
+## Rate Limiting
+
+The `jira.Client` includes built-in rate limiting to respect Jira Cloud's API limits. Requests are automatically throttled to prevent 429 responses.
+
+<Aside type="note">
+The architecture intentionally keeps the CLI and MCP modes separate at the presentation layer but shares the `jira.Client` and all business logic. This means both modes always have feature parity.
+</Aside>

@@ -1,0 +1,96 @@
+---
+title: Prompts
+description: MCP prompts for common Jira workflows.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+jtk registers 4 MCP prompts that provide guided workflows for common Jira tasks. Prompts generate structured instructions that tell the AI agent which tools to call and how to format the output.
+
+## standup_report
+
+Generate a standup report from recent Jira activity.
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `project_key` | Yes | Jira project key |
+| `days` | No | Number of days to look back (default: 1) |
+
+**What it does:**
+
+1. Searches for issues updated in the last N days using JQL
+2. Categorizes issues into Done, In Progress, and Blocked
+3. Formats as a standup report
+
+**Usage:**
+
+> "Use the standup_report prompt for project PROJ"
+
+## sprint_status
+
+Get current sprint status and progress.
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `board_id` | Yes | Jira board ID |
+
+**What it does:**
+
+1. Gets the active sprint for the board
+2. Retrieves all sprint issues
+3. Categorizes by status and calculates completion percentage
+4. Identifies at-risk items
+
+**Usage:**
+
+> "Use the sprint_status prompt for board 42"
+
+## release_notes
+
+Generate release notes from a Jira version/release.
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `project_key` | Yes | Jira project key |
+| `version_name` | Yes | Version name to generate notes for |
+
+**What it does:**
+
+1. Searches for all issues with the specified `fixVersion`
+2. Groups by issue type (Features, Bug Fixes, Improvements)
+3. Formats as professional release notes with highlights
+
+**Usage:**
+
+> "Use the release_notes prompt for PROJ version v2.0.0"
+
+## dev_tree
+
+Analyze development work (branches, PRs, commits) for an issue and its subtasks.
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `issue_key` | Yes | Parent issue key |
+
+**What it does:**
+
+1. Gets the parent issue details
+2. Finds all subtasks via JQL
+3. Gets dev info (branches, PRs, commits) for each
+4. Presents as a development tree highlighting stale branches and PRs needing review
+
+**Usage:**
+
+> "Use the dev_tree prompt for PROJ-100"
+
+<Aside type="tip">
+Prompts are used via MCP's prompt protocol. In Claude Desktop, you can invoke them from the prompt picker. In other clients, ask the AI to "use the [prompt name] prompt".
+</Aside>
