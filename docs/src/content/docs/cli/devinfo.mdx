@@ -1,0 +1,37 @@
+---
+title: jtk devinfo
+description: Get development info linked to a Jira issue.
+---
+
+The `devinfo` command shows development information (branches, pull requests, commits) linked to a Jira issue.
+
+## jtk devinfo
+
+Get dev info for an issue.
+
+```bash
+jtk devinfo PROJ-123
+jtk devinfo PROJ-123 --json
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `issue-key` | Jira issue key (required) |
+
+**Example output:**
+
+```
+Development Info for PROJ-123
+
+Branches:
+  repo: org/backend    branch: feature/PROJ-123-oauth    status: active
+
+Pull Requests:
+  repo: org/backend    #42: Add OAuth 2.0 support    status: MERGED
+
+Commits:
+  repo: org/backend    abc1234: fix token refresh logic    author: Jane Doe
+  repo: org/backend    def5678: add OAuth callback handler  author: Jane Doe
+```

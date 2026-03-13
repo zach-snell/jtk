@@ -97,6 +97,27 @@ jtk issues transition "Done"        # auto-detect issue from branch
 Transition names are matched by name, not ID. Use the exact name as it appears in your Jira workflow (e.g., "In Progress", "Done", "Code Review").
 </Aside>
 
+## jtk issues move
+
+Move an issue to another project. Auto-detects issue key from git branch.
+
+```bash
+jtk issues move PROJ-123 --target BACKEND
+jtk issues move PROJ-123 --target BACKEND --type Bug
+jtk issues move --target BACKEND          # auto-detect issue from branch
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--target` | *required* | Target project key |
+| `--type` | current type | Target issue type name |
+
+<Aside type="caution">
+Moving issues is only supported for **company-managed (classic)** projects. Team-managed (next-gen) projects do not support cross-project moves via the Jira REST API.
+</Aside>
+
 ## jtk issues comment
 
 Add a comment to an issue. Auto-detects issue key from git branch.

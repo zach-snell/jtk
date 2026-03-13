@@ -980,7 +980,7 @@ func TestMarkdownToADF_Golden(t *testing.T) {
 
 			goldenFile := strings.TrimSuffix(inputFile, ".md") + ".golden"
 			if *update {
-				if err := os.WriteFile(goldenFile, gotJSON, 0644); err != nil {
+				if err := os.WriteFile(goldenFile, gotJSON, 0o644); err != nil {
 					t.Fatal(err)
 				}
 				t.Logf("updated golden file: %s", goldenFile)

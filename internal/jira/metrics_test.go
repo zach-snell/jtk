@@ -1095,7 +1095,7 @@ func BenchmarkParseJiraTimestamp(b *testing.B) {
 	for _, bc := range cases {
 		b.Run(bc.name, func(b *testing.B) {
 			for b.Loop() {
-				parseJiraTimestamp(bc.input)
+				_, _ = parseJiraTimestamp(bc.input)
 			}
 		})
 	}

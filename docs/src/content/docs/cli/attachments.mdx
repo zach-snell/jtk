@@ -1,0 +1,52 @@
+---
+title: jtk attachments
+description: Manage Jira issue attachments.
+---
+
+The `attachments` command group manages issue attachments. Aliases: `attachment`, `att`.
+
+## jtk attachments list
+
+List attachments on an issue.
+
+```bash
+jtk attachments list PROJ-123
+jtk attachments list PROJ-123 --json
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `issue-key` | Jira issue key (required) |
+
+**Example output:**
+
+```
+ID      Filename              Size      Author      Created
+10001   screenshot.png        245 KB    Jane Doe    2025-01-14 09:30
+10002   error-log.txt         12 KB     Bob Smith   2025-01-14 14:00
+
+Showing 2 of 2 results
+```
+
+## jtk attachments download
+
+Download an attachment by ID.
+
+```bash
+jtk attachments download 10001
+jtk attachments download 10001 --output ./downloads/screenshot.png
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `attachment-id` | Attachment ID (required) |
+
+**Flags:**
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--output` | `-o` | current directory | File path to save the downloaded attachment |

@@ -1,0 +1,68 @@
+---
+title: jtk metrics
+description: Get issue lifecycle metrics.
+---
+
+The `metrics` command shows lifecycle metrics for a Jira issue, including cycle time, lead time, and time spent in each status.
+
+## jtk metrics
+
+Get computed metrics for an issue.
+
+```bash
+jtk metrics PROJ-123
+jtk metrics PROJ-123 --json
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `issue-key` | Jira issue key (required) |
+
+**Example output:**
+
+```
+Metrics for PROJ-123
+
+  Lead Time:             5d 3h
+  Cycle Time:            3d 1h
+  Time in Current Status: 4h
+
+Status Breakdown:
+  To Do          1d 2h
+  In Progress    2d 5h
+  Code Review    0d 4h
+  Done           0d 4h (current)
+```
+
+## jtk metrics --dates
+
+Get raw date and transition data instead of computed metrics.
+
+```bash
+jtk metrics PROJ-123 --dates
+jtk metrics PROJ-123 --dates --json
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--dates` | Show raw date info, status transitions, and time-in-status data |
+
+**Example output:**
+
+```
+Date Info for PROJ-123
+
+  Created:    2025-01-10 09:30
+  Updated:    2025-01-15 12:45
+  Resolved:   -
+
+Transitions:
+  2025-01-10 09:30  → To Do
+  2025-01-11 11:00  → In Progress
+  2025-01-14 16:00  → Code Review
+  2025-01-15 08:30  → Done
+```

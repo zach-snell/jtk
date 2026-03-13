@@ -1,6 +1,6 @@
 ---
 title: manage_issues
-description: MCP tool for Jira issue operations — get, create, update, assign, transition, comment, delete, link, watchers, and more.
+description: MCP tool for Jira issue operations — get, create, update, assign, transition, comment, delete, link, move, watchers, and more.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -28,6 +28,7 @@ Unified tool for Jira issue operations.
 | `get_watchers` | Get issue watchers | `issue_key` | | BROWSE_PROJECTS |
 | `add_watcher` | Add a watcher | `issue_key`, `assignee_id` | | MANAGE_WATCHERS |
 | `remove_watcher` | Remove a watcher | `issue_key`, `assignee_id` | | MANAGE_WATCHERS |
+| `move` | Move issue to another project | `issue_key`, `target_project_key` | `target_issue_type` | MOVE_ISSUES |
 
 ## Parameters
 
@@ -53,6 +54,8 @@ Unified tool for Jira issue operations.
 | `link_type` | string | Link type name (for `link`), e.g., `Blocks`, `Duplicate`, `Relates` |
 | `inward_key` | string | Inward issue key (for `link`) — the issue that IS affected |
 | `outward_key` | string | Outward issue key (for `link`) — the issue that CAUSES the effect |
+| `target_project_key` | string | Target project key (required for `move`). Only works with company-managed (classic) projects |
+| `target_issue_type` | string | Target issue type name (for `move`). If omitted, keeps the current issue type |
 | `start_at` | int | Pagination start (for `list_comments`, `get_history`) |
 | `max_results` | int | Max results to return |
 
@@ -141,6 +144,21 @@ Unified tool for Jira issue operations.
   "assignee_id": "5b10a2844c20165700ede21g"
 }
 ```
+
+### Move an issue to another project
+
+```json
+{
+  "action": "move",
+  "issue_key": "PROJ-123",
+  "target_project_key": "BACKEND",
+  "target_issue_type": "Bug"
+}
+```
+
+<Aside type="caution">
+Moving issues is only supported for **company-managed (classic)** projects. Team-managed (next-gen) projects do not support cross-project moves via the Jira REST API.
+</Aside>
 
 ### List issue types for a project
 

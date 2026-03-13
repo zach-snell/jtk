@@ -12,12 +12,15 @@ jtk provides a Cobra-based CLI with the following command groups:
 <CardGrid>
 	<LinkCard title="jtk auth" description="Login, status, logout, and environment variable config" href="/jtk/cli/auth/" />
 	<LinkCard title="jtk mcp" description="Start the MCP server (stdio or HTTP)" href="/jtk/cli/mcp/" />
-	<LinkCard title="jtk issues" description="Get, search, create, transition, and comment on issues" href="/jtk/cli/issues/" />
+	<LinkCard title="jtk issues" description="Get, search, create, transition, move, and comment on issues" href="/jtk/cli/issues/" />
 	<LinkCard title="jtk boards" description="List boards and manage sprints" href="/jtk/cli/boards/" />
 	<LinkCard title="jtk projects" description="List and inspect projects" href="/jtk/cli/projects/" />
 	<LinkCard title="jtk users" description="Search and inspect users" href="/jtk/cli/users/" />
 	<LinkCard title="jtk worklogs" description="List and add time tracking entries" href="/jtk/cli/worklogs/" />
 	<LinkCard title="jtk versions" description="List and inspect project versions" href="/jtk/cli/versions/" />
+	<LinkCard title="jtk devinfo" description="Get development info (branches, PRs, commits) for an issue" href="/jtk/cli/devinfo/" />
+	<LinkCard title="jtk attachments" description="List and download issue attachments" href="/jtk/cli/attachments/" />
+	<LinkCard title="jtk metrics" description="Get issue lifecycle metrics (cycle time, lead time, time in status)" href="/jtk/cli/metrics/" />
 </CardGrid>
 
 ## Global Flags
@@ -35,6 +38,7 @@ Several commands auto-detect the issue key from your current git branch if no ar
 - `jtk issues get`
 - `jtk issues transition`
 - `jtk issues comment`
+- `jtk issues move`
 - `jtk worklogs list`
 - `jtk worklogs add`
 

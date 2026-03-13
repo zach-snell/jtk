@@ -92,7 +92,7 @@ Use 'jtk attachments list <issue-key>' to find attachment IDs.`,
 			}
 		}
 
-		if err := os.WriteFile(dest, data, 0o644); err != nil {
+		if err := os.WriteFile(dest, data, 0o600); err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing file: %v\n", err)
 			os.Exit(1)
 		}

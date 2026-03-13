@@ -57,6 +57,9 @@ export default defineConfig({
 						{ label: 'jtk users', slug: 'cli/users' },
 						{ label: 'jtk worklogs', slug: 'cli/worklogs' },
 						{ label: 'jtk versions', slug: 'cli/versions' },
+						{ label: 'jtk devinfo', slug: 'cli/devinfo' },
+						{ label: 'jtk attachments', slug: 'cli/attachments' },
+						{ label: 'jtk metrics', slug: 'cli/metrics' },
 					],
 				},
 				{
