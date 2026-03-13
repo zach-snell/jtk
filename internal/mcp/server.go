@@ -57,6 +57,7 @@ func getPermissions(c *jira.Client) map[string]bool {
 		"LINK_ISSUES",
 		"CREATE_ATTACHMENTS",
 		"DELETE_ALL_ATTACHMENTS",
+		"MOVE_ISSUES",
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to fetch permissions for introspection: %v\n", err)
@@ -71,6 +72,7 @@ func getPermissions(c *jira.Client) map[string]bool {
 		perms["LINK_ISSUES"] = true
 		perms["CREATE_ATTACHMENTS"] = true
 		perms["DELETE_ALL_ATTACHMENTS"] = true
+		perms["MOVE_ISSUES"] = true
 		return perms
 	}
 
@@ -130,6 +132,9 @@ func registerTools(s *mcp.Server, c *jira.Client) {
 	}
 	if perms["LINK_ISSUES"] {
 		issueActions += ", 'link'"
+	}
+	if perms["MOVE_ISSUES"] {
+		issueActions += ", 'move'"
 	}
 
 	addTool(s, disabled, mcp.Tool{

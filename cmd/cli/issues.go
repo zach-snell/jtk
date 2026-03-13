@@ -241,6 +241,53 @@ var issuesCommentCmd = &cobra.Command{
 	},
 }
 
+var issuesMoveCmd = &cobra.Command{
+	Use:   "move [issue-key] --project <target-project-key>",
+	Short: "Move an issue to a different project",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		targetProject, _ := cmd.Flags().GetString("project")
+		if targetProject == "" {
+			fmt.Fprintln(os.Stderr, "Error: --project is required")
+			os.Exit(1)
+		}
+		targetType, _ := cmd.Flags().GetString("type")
+
+		client := getClient()
+		if err := client.MoveIssue(issueKey, targetProject, targetType); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Re-fetch to show updated issue
+		issue, err := client.GetIssue(issueKey)
+		if err != nil {
+			fmt.Printf("Issue %s moved to project %s\n", issueKey, targetProject)
+			return
+		}
+
+		PrintOrJSON(cmd, issue, func() {
+			fmt.Printf("Moved %s to project %s\n", issueKey, targetProject)
+			KV("Key", issue.Key)
+			if issue.Fields.Project != nil {
+				KV("Project", issue.Fields.Project.Key+" — "+issue.Fields.Project.Name)
+			}
+			if issue.Fields.IssueType != nil {
+				KV("Type", issue.Fields.IssueType.Name)
+			}
+			if issue.Fields.Status != nil {
+				KV("Status", issue.Fields.Status.Name)
+			}
+		})
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(issuesCmd)
 	issuesCmd.AddCommand(issuesGetCmd)
@@ -248,6 +295,7 @@ func init() {
 	issuesCmd.AddCommand(issuesCreateCmd)
 	issuesCmd.AddCommand(issuesTransitionCmd)
 	issuesCmd.AddCommand(issuesCommentCmd)
+	issuesCmd.AddCommand(issuesMoveCmd)
 
 	issuesSearchCmd.Flags().Int("max", 20, "Maximum results to return")
 
@@ -259,4 +307,7 @@ func init() {
 	issuesCreateCmd.Flags().String("assignee", "", "Assignee account ID")
 	issuesCreateCmd.Flags().String("parent", "", "Parent issue key (for sub-tasks)")
 	issuesCreateCmd.Flags().String("labels", "", "Comma-separated labels")
+
+	issuesMoveCmd.Flags().StringP("project", "P", "", "Target project key (required)")
+	issuesMoveCmd.Flags().StringP("type", "t", "", "Target issue type (optional, keeps current if omitted)")
 }

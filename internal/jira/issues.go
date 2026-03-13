@@ -32,6 +32,34 @@ func (c *Client) UpdateIssue(issueKey string, req *UpdateIssueRequest) error {
 	return err
 }
 
+// MoveIssue moves an issue to a different project by updating its project field.
+// Optionally changes the issue type if the target project doesn't have the same type.
+// Note: This only works with company-managed (classic) projects. Team-managed (next-gen)
+// projects silently ignore project field changes via the REST API.
+func (c *Client) MoveIssue(issueKey, targetProjectKey, issueType string) error {
+	fields := map[string]interface{}{
+		"project": map[string]string{"key": targetProjectKey},
+	}
+	if issueType != "" {
+		fields["issuetype"] = map[string]string{"name": issueType}
+	}
+
+	req := &UpdateIssueRequest{Fields: fields}
+	if err := c.UpdateIssue(issueKey, req); err != nil {
+		return err
+	}
+
+	// Verify the move actually happened — team-managed projects silently ignore this
+	issue, err := c.GetIssue(issueKey)
+	if err != nil {
+		return nil // Update succeeded, can't verify but assume success
+	}
+	if issue.Fields.Project != nil && issue.Fields.Project.Key != targetProjectKey {
+		return fmt.Errorf("move failed: issue %s is still in project %s (team-managed/next-gen projects do not support cross-project moves via REST API)", issueKey, issue.Fields.Project.Key)
+	}
+	return nil
+}
+
 // AssignIssue assigns an issue to a user by account ID.
 // Pass empty string to unassign.
 func (c *Client) AssignIssue(issueKey, accountID string) error {

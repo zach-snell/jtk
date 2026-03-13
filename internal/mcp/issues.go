@@ -10,28 +10,30 @@ import (
 )
 
 type ManageIssuesArgs struct {
-	Action      string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher"`
-	IssueKey    string `json:"issue_key,omitempty" jsonschema:"Jira issue key (e.g., PROJ-123). Required for most actions"`
-	ProjectKey  string `json:"project_key,omitempty" jsonschema:"Project key (for 'create', 'list_types')"`
-	ProjectID   string `json:"project_id,omitempty" jsonschema:"Project ID (for 'list_types' — use project_key or project_id)"`
-	Summary     string `json:"summary,omitempty" jsonschema:"Issue summary/title (for 'create', 'update')"`
-	Description string `json:"description,omitempty" jsonschema:"Issue description in markdown (for 'create', 'update'). Supports: # headings, **bold**, *italic*, ~~strikethrough~~, [links](url), - bullet lists, 1. numbered lists, > blockquotes, tables, and fenced code blocks. URLs are auto-linked."`
-	IssueType   string `json:"issue_type,omitempty" jsonschema:"Issue type: Story, Bug, Task, Epic, Sub-task (for 'create')"`
-	Priority    string `json:"priority,omitempty" jsonschema:"Priority: Highest, High, Medium, Low, Lowest (for 'create', 'update')"`
-	AssigneeID  string `json:"assignee_id,omitempty" jsonschema:"Assignee account ID (for 'create', 'update', 'assign'). Use 'unassigned' to remove"`
-	ParentKey   string `json:"parent_key,omitempty" jsonschema:"Parent issue key (for 'create')"`
-	Labels      string `json:"labels,omitempty" jsonschema:"Comma-separated labels (for 'create', 'update')"`
-	Components  string `json:"components,omitempty" jsonschema:"Comma-separated component names (for 'create', 'update')"`
-	FixVersions string `json:"fix_versions,omitempty" jsonschema:"Comma-separated fix version names (for 'create', 'update')"`
-	DueDate     string `json:"due_date,omitempty" jsonschema:"Due date in YYYY-MM-DD format (for 'create', 'update')"`
-	Transition  string `json:"transition,omitempty" jsonschema:"Target transition name (for 'transition'), e.g. 'In Progress', 'Done'"`
-	Comment     string `json:"comment,omitempty" jsonschema:"Comment body in markdown (for 'add_comment', 'edit_comment', 'link'). Supports: **bold**, *italic*, ~~strikethrough~~, [links](url), - lists, > blockquotes, and fenced code blocks. URLs are auto-linked."`
-	CommentID   string `json:"comment_id,omitempty" jsonschema:"Comment ID (required for 'edit_comment')"`
-	LinkType    string `json:"link_type,omitempty" jsonschema:"Link type name (for 'link'), e.g. 'Blocks', 'Duplicate', 'Relates'"`
-	InwardKey   string `json:"inward_key,omitempty" jsonschema:"Inward issue key (for 'link') — the issue that IS affected"`
-	OutwardKey  string `json:"outward_key,omitempty" jsonschema:"Outward issue key (for 'link') — the issue that CAUSES the effect"`
-	StartAt     int    `json:"start_at,omitempty" jsonschema:"Pagination start (for 'list_comments', 'get_history')"`
-	MaxResults  int    `json:"max_results,omitempty" jsonschema:"Max results to return"`
+	Action           string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher', 'move'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher,move"`
+	IssueKey         string `json:"issue_key,omitempty" jsonschema:"Jira issue key (e.g., PROJ-123). Required for most actions"`
+	ProjectKey       string `json:"project_key,omitempty" jsonschema:"Project key (for 'create', 'list_types')"`
+	ProjectID        string `json:"project_id,omitempty" jsonschema:"Project ID (for 'list_types' — use project_key or project_id)"`
+	Summary          string `json:"summary,omitempty" jsonschema:"Issue summary/title (for 'create', 'update')"`
+	Description      string `json:"description,omitempty" jsonschema:"Issue description in markdown (for 'create', 'update'). Supports: # headings, **bold**, *italic*, ~~strikethrough~~, [links](url), - bullet lists, 1. numbered lists, > blockquotes, tables, and fenced code blocks. URLs are auto-linked."`
+	IssueType        string `json:"issue_type,omitempty" jsonschema:"Issue type: Story, Bug, Task, Epic, Sub-task (for 'create')"`
+	Priority         string `json:"priority,omitempty" jsonschema:"Priority: Highest, High, Medium, Low, Lowest (for 'create', 'update')"`
+	AssigneeID       string `json:"assignee_id,omitempty" jsonschema:"Assignee account ID (for 'create', 'update', 'assign'). Use 'unassigned' to remove"`
+	ParentKey        string `json:"parent_key,omitempty" jsonschema:"Parent issue key (for 'create')"`
+	Labels           string `json:"labels,omitempty" jsonschema:"Comma-separated labels (for 'create', 'update')"`
+	Components       string `json:"components,omitempty" jsonschema:"Comma-separated component names (for 'create', 'update')"`
+	FixVersions      string `json:"fix_versions,omitempty" jsonschema:"Comma-separated fix version names (for 'create', 'update')"`
+	DueDate          string `json:"due_date,omitempty" jsonschema:"Due date in YYYY-MM-DD format (for 'create', 'update')"`
+	Transition       string `json:"transition,omitempty" jsonschema:"Target transition name (for 'transition'), e.g. 'In Progress', 'Done'"`
+	Comment          string `json:"comment,omitempty" jsonschema:"Comment body in markdown (for 'add_comment', 'edit_comment', 'link'). Supports: **bold**, *italic*, ~~strikethrough~~, [links](url), - lists, > blockquotes, and fenced code blocks. URLs are auto-linked."`
+	CommentID        string `json:"comment_id,omitempty" jsonschema:"Comment ID (required for 'edit_comment')"`
+	LinkType         string `json:"link_type,omitempty" jsonschema:"Link type name (for 'link'), e.g. 'Blocks', 'Duplicate', 'Relates'"`
+	InwardKey        string `json:"inward_key,omitempty" jsonschema:"Inward issue key (for 'link') — the issue that IS affected"`
+	OutwardKey       string `json:"outward_key,omitempty" jsonschema:"Outward issue key (for 'link') — the issue that CAUSES the effect"`
+	TargetProjectKey string `json:"target_project_key,omitempty" jsonschema:"Target project key (for 'move'). Only works with company-managed (classic) projects"`
+	TargetIssueType  string `json:"target_issue_type,omitempty" jsonschema:"Target issue type name (for 'move'), e.g. 'Story', 'Task'. Optional — keeps current type if omitted"`
+	StartAt          int    `json:"start_at,omitempty" jsonschema:"Pagination start (for 'list_comments', 'get_history')"`
+	MaxResults       int    `json:"max_results,omitempty" jsonschema:"Max results to return"`
 }
 
 // ManageIssuesHandler handles the consolidated issue operations.
@@ -72,6 +74,8 @@ func ManageIssuesHandler(c *jira.Client, perms map[string]bool) func(context.Con
 			return handleAddWatcher(c, perms, args)
 		case "remove_watcher":
 			return handleRemoveWatcher(c, perms, args)
+		case "move":
+			return handleMoveIssue(c, perms, args)
 		default:
 			return ToolResultError(fmt.Sprintf("unknown action: %s", args.Action)), nil, nil
 		}
@@ -516,4 +520,24 @@ func handleRemoveWatcher(c *jira.Client, perms map[string]bool, args ManageIssue
 		return ToolResultError(fmt.Sprintf("failed to remove watcher: %v", err)), nil, nil
 	}
 	return ToolResultText(fmt.Sprintf("Removed watcher %s from %s", args.AssigneeID, args.IssueKey)), nil, nil
+}
+
+func handleMoveIssue(c *jira.Client, perms map[string]bool, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {
+	if !perms["MOVE_ISSUES"] {
+		return ToolResultError("token lacks MOVE_ISSUES permission"), nil, nil
+	}
+	if args.IssueKey == "" || args.TargetProjectKey == "" {
+		return ToolResultError("issue_key and target_project_key are required for 'move' action"), nil, nil
+	}
+	if err := c.MoveIssue(args.IssueKey, args.TargetProjectKey, args.TargetIssueType); err != nil {
+		return ToolResultError(fmt.Sprintf("failed to move issue: %v", err)), nil, nil
+	}
+	// Re-fetch to get the new key (may have changed)
+	issue, err := c.GetIssue(args.IssueKey)
+	if err != nil {
+		// Move succeeded but re-fetch failed — still report success
+		return ToolResultText(fmt.Sprintf("Issue %s moved to project %s", args.IssueKey, args.TargetProjectKey)), nil, nil
+	}
+	flat := jira.FlattenIssueFromTyped(issue)
+	return ToolResultText(jira.SafeJSON(flat, 30000)), nil, nil
 }
