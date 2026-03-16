@@ -13,7 +13,10 @@ import (
 	mcpserver "github.com/zach-snell/jtk/internal/mcp"
 )
 
-var port int
+var (
+	port   int
+	noAuth bool
+)
 
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
@@ -29,21 +32,29 @@ run it using the HTTP Streamable transport.`,
 func init() {
 	RootCmd.AddCommand(mcpCmd)
 	mcpCmd.Flags().IntVarP(&port, "port", "p", 0, "Port to listen on for HTTP Streamable transport")
+	mcpCmd.Flags().BoolVar(&noAuth, "no-auth", false, "Start server without authentication (tools will return auth-required errors when called)")
 }
 
 func runServer() {
-	creds, err := jira.LoadCredentials()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "No credentials found. Either:\n")
-		fmt.Fprintf(os.Stderr, "  1. Run: jtk auth\n")
-		fmt.Fprintf(os.Stderr, "  2. Set JIRA_DOMAIN + JIRA_EMAIL + JIRA_API_TOKEN env vars\n")
-		os.Exit(1)
-	}
+	var s *mcp.Server
 
-	s, err := mcpserver.NewFromCredentials(creds)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing MCP server: %v\n", err)
-		os.Exit(1)
+	if noAuth {
+		s = mcpserver.NewUnauthenticated()
+	} else {
+		creds, err := jira.LoadCredentials()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "No credentials found. Either:\n")
+			fmt.Fprintf(os.Stderr, "  1. Run: jtk auth\n")
+			fmt.Fprintf(os.Stderr, "  2. Set JIRA_DOMAIN + JIRA_EMAIL + JIRA_API_TOKEN env vars\n")
+			os.Exit(1)
+		}
+
+		var initErr error
+		s, initErr = mcpserver.NewFromCredentials(creds)
+		if initErr != nil {
+			fmt.Fprintf(os.Stderr, "Error initializing MCP server: %v\n", initErr)
+			os.Exit(1)
+		}
 	}
 
 	if port != 0 {
