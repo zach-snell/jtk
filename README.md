@@ -9,6 +9,8 @@ The most comprehensive dedicated Jira MCP server in the open-source ecosystem. A
 
 **11 MCP tools · 4 prompt templates · Full CLI · Single binary · Zero dependencies**
 
+[![jtk MCP server](https://glama.ai/mcp/servers/zach-snell/jtk/badges/card.svg)](https://glama.ai/mcp/servers/zach-snell/jtk)
+
 ## Why jtk?
 
 | | jtk | mcp-atlassian (Python) |
