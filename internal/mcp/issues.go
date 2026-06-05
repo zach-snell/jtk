@@ -19,7 +19,7 @@ type ManageIssuesArgs struct {
 	IssueType        string `json:"issue_type,omitempty" jsonschema:"Issue type: Story, Bug, Task, Epic, Sub-task (for 'create')"`
 	Priority         string `json:"priority,omitempty" jsonschema:"Priority: Highest, High, Medium, Low, Lowest (for 'create', 'update')"`
 	AssigneeID       string `json:"assignee_id,omitempty" jsonschema:"Assignee account ID (for 'create', 'update', 'assign'). Use 'unassigned' to remove"`
-	ParentKey        string `json:"parent_key,omitempty" jsonschema:"Parent issue key (for 'create')"`
+	ParentKey        string `json:"parent_key,omitempty" jsonschema:"Parent/epic issue key. On 'create' sets the parent; on 'update' re-parents the issue (verified by readback - fails loudly if the server ignores it)"`
 	Labels           string `json:"labels,omitempty" jsonschema:"Comma-separated labels (for 'create', 'update')"`
 	Components       string `json:"components,omitempty" jsonschema:"Comma-separated component names (for 'create', 'update')"`
 	FixVersions      string `json:"fix_versions,omitempty" jsonschema:"Comma-separated fix version names (for 'create', 'update')"`
@@ -142,9 +142,25 @@ func handleUpdateIssue(c *jira.Client, perms map[string]bool, args ManageIssuesA
 		FixVersions: parseCSV(args.FixVersions),
 		DueDate:     args.DueDate,
 	})
-	if err := c.UpdateIssue(args.IssueKey, updateReq); err != nil {
-		return ToolResultError(fmt.Sprintf("failed to update issue: %v", err)), nil, nil
+
+	if len(updateReq.Fields) == 0 && args.ParentKey == "" {
+		return ToolResultError("no fields provided to update (set summary, description, parent_key, etc.)"), nil, nil
 	}
+
+	if len(updateReq.Fields) > 0 {
+		if err := c.UpdateIssue(args.IssueKey, updateReq); err != nil {
+			return ToolResultError(fmt.Sprintf("failed to update issue: %v", err)), nil, nil
+		}
+	}
+
+	// Re-parenting goes through ReparentIssue, which reads the issue back and
+	// fails loudly if Jira silently ignored the parent change.
+	if args.ParentKey != "" {
+		if err := c.ReparentIssue(args.IssueKey, args.ParentKey); err != nil {
+			return ToolResultError(fmt.Sprintf("failed to re-parent issue: %v", err)), nil, nil
+		}
+	}
+
 	return ToolResultText(fmt.Sprintf("Issue %s updated successfully", args.IssueKey)), nil, nil
 }
 

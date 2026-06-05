@@ -288,6 +288,46 @@ var issuesMoveCmd = &cobra.Command{
 	},
 }
 
+var issuesReparentCmd = &cobra.Command{
+	Use:   "reparent [issue-key] --to <parent-key>",
+	Short: "Change an issue's parent/epic (verified by readback)",
+	Long: `Change an issue's parent (epic or parent link), then read the issue back to
+confirm the change actually landed. Jira silently ignores a rejected parent
+field on some project types, so this fails loudly rather than reporting a
+false success. Use --detach to remove the parent.`,
+	Args: cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		to, _ := cmd.Flags().GetString("to")
+		detach, _ := cmd.Flags().GetBool("detach")
+		switch {
+		case to == "" && !detach:
+			fmt.Fprintln(os.Stderr, "Error: either --to <parent-key> or --detach is required")
+			os.Exit(1)
+		case to != "" && detach:
+			fmt.Fprintln(os.Stderr, "Error: --to and --detach are mutually exclusive")
+			os.Exit(1)
+		}
+
+		client := getClient()
+		if err := client.ReparentIssue(issueKey, to); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		if detach {
+			fmt.Printf("Detached %s from its parent (verified)\n", issueKey)
+		} else {
+			fmt.Printf("Re-parented %s → %s (verified)\n", issueKey, to)
+		}
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(issuesCmd)
 	issuesCmd.AddCommand(issuesGetCmd)
@@ -296,6 +336,7 @@ func init() {
 	issuesCmd.AddCommand(issuesTransitionCmd)
 	issuesCmd.AddCommand(issuesCommentCmd)
 	issuesCmd.AddCommand(issuesMoveCmd)
+	issuesCmd.AddCommand(issuesReparentCmd)
 
 	issuesSearchCmd.Flags().Int("max", 20, "Maximum results to return")
 
@@ -310,4 +351,7 @@ func init() {
 
 	issuesMoveCmd.Flags().StringP("project", "P", "", "Target project key (required)")
 	issuesMoveCmd.Flags().StringP("type", "t", "", "Target issue type (optional, keeps current if omitted)")
+
+	issuesReparentCmd.Flags().String("to", "", "New parent/epic issue key")
+	issuesReparentCmd.Flags().Bool("detach", false, "Remove the issue's parent instead of setting one")
 }

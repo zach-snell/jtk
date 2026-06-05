@@ -60,6 +60,43 @@ func (c *Client) MoveIssue(issueKey, targetProjectKey, issueType string) error {
 	return nil
 }
 
+// ReparentIssue changes an issue's parent (epic / parent link) and verifies the
+// change actually landed. Jira silently accepts and ignores a rejected parent
+// field on some project configurations — returning "204 No Content" as if it
+// worked — so this reads the issue back and returns a loud error when the parent
+// did not change. It never reports a false success. Pass an empty newParentKey
+// to detach the issue from its current parent.
+func (c *Client) ReparentIssue(issueKey, newParentKey string) error {
+	var parentField interface{} // nil marshals to JSON null (detach)
+	if newParentKey != "" {
+		parentField = IssueRef{Key: newParentKey}
+	}
+
+	req := &UpdateIssueRequest{Fields: map[string]interface{}{"parent": parentField}}
+	if err := c.UpdateIssue(issueKey, req); err != nil {
+		return err
+	}
+
+	// Read back and verify — silent no-ops on the parent field are the whole
+	// reason this method exists.
+	issue, err := c.GetIssue(issueKey)
+	if err != nil {
+		return fmt.Errorf("re-parent of %s was sent but could not be verified (readback failed): %w", issueKey, err)
+	}
+
+	current := ""
+	if issue.Fields.Parent != nil {
+		current = issue.Fields.Parent.Key
+	}
+	if current != newParentKey {
+		if newParentKey == "" {
+			return fmt.Errorf("detach of %s failed: it still reports parent %q. The server ignored the parent field — company-managed projects may store the epic link in a custom field instead", issueKey, current)
+		}
+		return fmt.Errorf("re-parent of %s failed: parent is %q, expected %q. The server silently ignored the parent field — the parent issue type may be incompatible, or this company-managed project stores the epic link in a custom field", issueKey, current, newParentKey)
+	}
+	return nil
+}
+
 // AssignIssue assigns an issue to a user by account ID.
 // Pass empty string to unassign.
 func (c *Client) AssignIssue(issueKey, accountID string) error {

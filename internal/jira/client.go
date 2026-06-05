@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -58,6 +59,27 @@ func (rl *RateLimiter) Allow() bool {
 		return true
 	}
 	return false
+}
+
+// Wait blocks until a token is available, then consumes it. Unlike Allow it
+// never fails — it paces requests so bulk operations stay under the limit
+// instead of erroring out, then retrying by hand.
+func (rl *RateLimiter) Wait() {
+	for {
+		rl.mu.Lock()
+		rl.refill()
+		if rl.tokens > 0 {
+			rl.tokens--
+			rl.mu.Unlock()
+			return
+		}
+		wait := rl.refillRate - time.Since(rl.lastRefill)
+		rl.mu.Unlock()
+		if wait <= 0 {
+			wait = rl.refillRate
+		}
+		time.Sleep(wait)
+	}
 }
 
 func (rl *RateLimiter) refill() {
@@ -155,37 +177,67 @@ func (c *Client) TokenType() TokenType {
 	return c.tokenType
 }
 
-// do executes an HTTP request with auth headers and rate limiting.
+// maxRetries is the number of times do retries a request after an HTTP 429.
+const maxRetries = 5
+
+// do executes an HTTP request with auth headers, client-side pacing, and
+// automatic retry on HTTP 429 (honoring Retry-After). It blocks rather than
+// erroring when the local rate limit is reached, so bulk operations run
+// unattended without tripping the server's per-minute cap.
 func (c *Client) do(method, url string, bodyData []byte, contentType string) (*http.Response, error) {
-	if !c.rateLimiter.Allow() {
-		return nil, fmt.Errorf("rate limit exceeded: max 20 requests per minute. Please wait and retry")
+	for attempt := 1; ; attempt++ {
+		c.rateLimiter.Wait()
+
+		var bodyReader io.Reader
+		if bodyData != nil {
+			bodyReader = bytes.NewReader(bodyData)
+		}
+
+		req, err := http.NewRequest(method, url, bodyReader)
+		if err != nil {
+			return nil, fmt.Errorf("creating request: %w", err)
+		}
+
+		// Both classic and scoped tokens use Basic Auth (email:api_token).
+		// The difference is only the base URL (direct site vs gateway).
+		req.SetBasicAuth(c.email, c.token)
+
+		if contentType != "" {
+			req.Header.Set("Content-Type", contentType)
+		}
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := c.http.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("executing request: %w", err)
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests && attempt < maxRetries {
+			wait := retryAfterDelay(resp, attempt)
+			resp.Body.Close()
+			time.Sleep(wait)
+			continue
+		}
+
+		return resp, nil
 	}
+}
 
-	var bodyReader io.Reader
-	if bodyData != nil {
-		bodyReader = bytes.NewReader(bodyData)
+// retryAfterDelay returns how long to wait before retrying a 429 response. It
+// honors the Retry-After header (delay-seconds or HTTP-date) when present and
+// otherwise falls back to exponential backoff (1s, 2s, 4s, ...).
+func retryAfterDelay(resp *http.Response, attempt int) time.Duration {
+	if ra := strings.TrimSpace(resp.Header.Get("Retry-After")); ra != "" {
+		if secs, err := strconv.Atoi(ra); err == nil && secs >= 0 {
+			return time.Duration(secs) * time.Second
+		}
+		if t, err := http.ParseTime(ra); err == nil {
+			if d := time.Until(t); d > 0 {
+				return d
+			}
+		}
 	}
-
-	req, err := http.NewRequest(method, url, bodyReader)
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-
-	// Both classic and scoped tokens use Basic Auth (email:api_token).
-	// The difference is only the base URL (direct site vs gateway).
-	req.SetBasicAuth(c.email, c.token)
-
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("executing request: %w", err)
-	}
-
-	return resp, nil
+	return time.Duration(1<<(attempt-1)) * time.Second
 }
 
 // Get performs a GET request to the REST API v3 and returns the response body.
@@ -393,9 +445,7 @@ func (c *Client) GetAbsolute(absoluteURL string) (*http.Response, error) {
 // PostMultipart performs a POST request with multipart/form-data body.
 // Used for uploading attachments to Jira issues.
 func (c *Client) PostMultipart(path string, bodyData []byte, contentType string) ([]byte, error) {
-	if !c.rateLimiter.Allow() {
-		return nil, fmt.Errorf("rate limit exceeded: max 20 requests per minute. Please wait and retry")
-	}
+	c.rateLimiter.Wait()
 
 	req, err := http.NewRequest(http.MethodPost, c.baseURL+path, bytes.NewReader(bodyData))
 	if err != nil {
