@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -80,11 +81,14 @@ func ProbeTokenType(domain, email, token string) (TokenType, string, error) {
 	if err != nil {
 		return "", "", fmt.Errorf("probing classic auth: %w", err)
 	}
+	classicBody := readBodySnippet(resp.Body)
 	resp.Body.Close()
 
 	// Only 401 means "auth credentials rejected" — 403/404/etc mean auth worked
-	// but the user lacks permissions or the resource doesn't exist.
-	if resp.StatusCode != http.StatusUnauthorized {
+	// but the user lacks permissions or the resource doesn't exist. A scope-denial
+	// (HTTP 401 "scope does not match") means the token authenticated but lacks the
+	// scope for /myself — the credentials are still valid, so treat it as success.
+	if resp.StatusCode != http.StatusUnauthorized || isScopeDenied(classicBody) {
 		return TokenTypeClassic, "", nil
 	}
 
@@ -107,13 +111,33 @@ func ProbeTokenType(domain, email, token string) (TokenType, string, error) {
 	if err != nil {
 		return "", "", fmt.Errorf("probing scoped auth: %w", err)
 	}
+	scopedBody := readBodySnippet(resp.Body)
 	resp.Body.Close()
 
-	if resp.StatusCode != http.StatusUnauthorized {
+	// 200 (or any non-401) means the scoped token works for /myself. A 401
+	// "scope does not match" means the token authenticated against the gateway
+	// but lacks the read:user:jira scope — the credentials are valid, so accept
+	// them as a scoped token. Only a generic 401 ("Client must be authenticated")
+	// indicates the token itself was rejected.
+	if resp.StatusCode != http.StatusUnauthorized || isScopeDenied(scopedBody) {
 		return TokenTypeScoped, cloudID, nil
 	}
 
 	return "", "", fmt.Errorf("authentication failed with both classic (Basic Auth) and scoped (Bearer) methods. Verify your domain, email, and API token are correct")
+}
+
+// readBodySnippet reads up to 1 KiB of a response body for diagnostic matching.
+func readBodySnippet(body io.Reader) string {
+	snippet, _ := io.ReadAll(io.LimitReader(body, 1024))
+	return string(snippet)
+}
+
+// isScopeDenied reports whether an Atlassian 401 body indicates the token
+// authenticated successfully but lacks the scope for the requested endpoint
+// (gateway returns `{"message":"Unauthorized; scope does not match"}`), as
+// opposed to the credentials themselves being rejected.
+func isScopeDenied(body string) bool {
+	return strings.Contains(body, "scope does not match")
 }
 
 // CredentialsPath returns the path to the credentials file.

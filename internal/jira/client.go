@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -431,6 +432,12 @@ func parseAPIError(statusCode int, body []byte) error {
 		return fmt.Errorf("403 Forbidden: Permission denied. Ensure your Jira API token has the required permissions. Details: %s", string(body))
 	}
 	if statusCode == http.StatusUnauthorized {
+		// "scope does not match" means the token authenticated but lacks the scope
+		// for this endpoint — a token-scope problem, not bad credentials.
+		if strings.Contains(string(body), "scope does not match") {
+			return fmt.Errorf("401 Unauthorized: your API token is missing a required scope for this operation. "+
+				"Recreate the token via \"Create API token with scopes\" and select all scopes ('jtk auth' prints a copy/paste list). Details: %s", string(body))
+		}
 		return fmt.Errorf("401 Unauthorized: Authentication failed. Check your email and API token. Details: %s", string(body))
 	}
 	return fmt.Errorf("API error %d: %s", statusCode, string(body))
