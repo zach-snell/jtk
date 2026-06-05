@@ -10,8 +10,9 @@ import (
 )
 
 type ManageIssuesArgs struct {
-	Action           string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher', 'move'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher,move"`
+	Action           string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher', 'move', 'archive', 'unarchive'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher,move,archive,unarchive"`
 	IssueKey         string `json:"issue_key,omitempty" jsonschema:"Jira issue key (e.g., PROJ-123). Required for most actions"`
+	IssueKeys        string `json:"issue_keys,omitempty" jsonschema:"Comma-separated issue keys (for 'archive', 'unarchive'). Archiving requires a Jira plan that supports it"`
 	ProjectKey       string `json:"project_key,omitempty" jsonschema:"Project key (for 'create', 'list_types')"`
 	ProjectID        string `json:"project_id,omitempty" jsonschema:"Project ID (for 'list_types' — use project_key or project_id)"`
 	Summary          string `json:"summary,omitempty" jsonschema:"Issue summary/title (for 'create', 'update')"`
@@ -76,6 +77,10 @@ func ManageIssuesHandler(c *jira.Client, perms map[string]bool) func(context.Con
 			return handleRemoveWatcher(c, perms, args)
 		case "move":
 			return handleMoveIssue(c, perms, args)
+		case "archive":
+			return handleArchiveIssues(c, perms, args, false)
+		case "unarchive":
+			return handleArchiveIssues(c, perms, args, true)
 		default:
 			return ToolResultError(fmt.Sprintf("unknown action: %s", args.Action)), nil, nil
 		}
@@ -162,6 +167,30 @@ func handleUpdateIssue(c *jira.Client, perms map[string]bool, args ManageIssuesA
 	}
 
 	return ToolResultText(fmt.Sprintf("Issue %s updated successfully", args.IssueKey)), nil, nil
+}
+
+func handleArchiveIssues(c *jira.Client, perms map[string]bool, args ManageIssuesArgs, unarchive bool) (*mcp.CallToolResult, any, error) {
+	if !perms["EDIT_ISSUES"] {
+		return ToolResultError("token lacks EDIT_ISSUES permission"), nil, nil
+	}
+	keys := parseCSV(args.IssueKeys)
+	if len(keys) == 0 && args.IssueKey != "" {
+		keys = []string{args.IssueKey}
+	}
+	if len(keys) == 0 {
+		return ToolResultError("issue_keys is required for 'archive'/'unarchive'"), nil, nil
+	}
+
+	verb := "archive"
+	res, err := c.ArchiveIssues(keys)
+	if unarchive {
+		verb = "unarchive"
+		res, err = c.UnarchiveIssues(keys)
+	}
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to %s: %v (archiving requires a Jira plan that supports it)", verb, err)), nil, nil
+	}
+	return ToolResultText(fmt.Sprintf("%sd %d issue(s): %s", verb, res.NumberOfIssuesUpdated, strings.Join(keys, ", "))), nil, nil
 }
 
 func handleAssignIssue(c *jira.Client, perms map[string]bool, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {

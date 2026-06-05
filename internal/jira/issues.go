@@ -97,6 +97,41 @@ func (c *Client) ReparentIssue(issueKey, newParentKey string) error {
 	return nil
 }
 
+// ArchiveResult is the response from the bulk archive/unarchive endpoints.
+type ArchiveResult struct {
+	NumberOfIssuesUpdated int                    `json:"numberOfIssuesUpdated"`
+	Errors                map[string]interface{} `json:"errors,omitempty"`
+}
+
+// ArchiveIssues archives one or more issues by key, removing them from boards,
+// backlogs, and the roadmap without deleting them. Reversible via
+// UnarchiveIssues. Requires a Jira plan that supports archiving (Premium/
+// Enterprise) — the API returns a 4xx on plans that don't.
+func (c *Client) ArchiveIssues(keys []string) (*ArchiveResult, error) {
+	return c.archiveOp("/issue/archive", keys)
+}
+
+// UnarchiveIssues restores previously archived issues by key.
+func (c *Client) UnarchiveIssues(keys []string) (*ArchiveResult, error) {
+	return c.archiveOp("/issue/unarchive", keys)
+}
+
+func (c *Client) archiveOp(path string, keys []string) (*ArchiveResult, error) {
+	if len(keys) == 0 {
+		return nil, fmt.Errorf("no issue keys provided")
+	}
+	body := map[string]interface{}{"issueIdsOrKeys": keys}
+	data, err := c.Put(path, body)
+	if err != nil {
+		return nil, err
+	}
+	var result ArchiveResult
+	if err := unmarshalJSON(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 // AssignIssue assigns an issue to a user by account ID.
 // Pass empty string to unassign.
 func (c *Client) AssignIssue(issueKey, accountID string) error {

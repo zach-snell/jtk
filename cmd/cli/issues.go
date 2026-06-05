@@ -328,6 +328,45 @@ false success. Use --detach to remove the parent.`,
 	},
 }
 
+var issuesArchiveCmd = &cobra.Command{
+	Use:   "archive <issue-key>...",
+	Short: "Archive issues (remove from boards/backlog; reversible)",
+	Long: `Archive one or more issues, removing them from boards, backlogs, and the
+roadmap without deleting them. Reversible with 'jtk issues unarchive'.
+Requires a Jira plan that supports archiving (Premium/Enterprise).`,
+	Args: cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client := getClient()
+		res, err := client.ArchiveIssues(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Archived %d issue(s): %s\n", res.NumberOfIssuesUpdated, strings.Join(args, ", "))
+		if len(res.Errors) > 0 {
+			fmt.Fprintf(os.Stderr, "Some issues reported errors: %v\n", res.Errors)
+		}
+	},
+}
+
+var issuesUnarchiveCmd = &cobra.Command{
+	Use:   "unarchive <issue-key>...",
+	Short: "Restore previously archived issues",
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client := getClient()
+		res, err := client.UnarchiveIssues(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Unarchived %d issue(s): %s\n", res.NumberOfIssuesUpdated, strings.Join(args, ", "))
+		if len(res.Errors) > 0 {
+			fmt.Fprintf(os.Stderr, "Some issues reported errors: %v\n", res.Errors)
+		}
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(issuesCmd)
 	issuesCmd.AddCommand(issuesGetCmd)
@@ -337,6 +376,8 @@ func init() {
 	issuesCmd.AddCommand(issuesCommentCmd)
 	issuesCmd.AddCommand(issuesMoveCmd)
 	issuesCmd.AddCommand(issuesReparentCmd)
+	issuesCmd.AddCommand(issuesArchiveCmd)
+	issuesCmd.AddCommand(issuesUnarchiveCmd)
 
 	issuesSearchCmd.Flags().Int("max", 20, "Maximum results to return")
 
