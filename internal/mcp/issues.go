@@ -10,7 +10,7 @@ import (
 )
 
 type ManageIssuesArgs struct {
-	Action           string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher', 'move', 'archive', 'unarchive'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher,move,archive,unarchive"`
+	Action           string `json:"action" jsonschema:"Action to perform: 'get', 'list_types', 'get_links', 'get_history', 'create', 'update', 'assign', 'transition', 'add_comment', 'edit_comment', 'list_comments', 'delete', 'link', 'list_link_types', 'get_watchers', 'add_watcher', 'remove_watcher', 'move', 'archive', 'unarchive', 'list_transitions', 'add_labels', 'remove_labels'" jsonschema_enum:"get,list_types,get_links,get_history,create,update,assign,transition,add_comment,edit_comment,list_comments,delete,link,list_link_types,get_watchers,add_watcher,remove_watcher,move,archive,unarchive,list_transitions,add_labels,remove_labels"`
 	IssueKey         string `json:"issue_key,omitempty" jsonschema:"Jira issue key (e.g., PROJ-123). Required for most actions"`
 	IssueKeys        string `json:"issue_keys,omitempty" jsonschema:"Comma-separated issue keys (for 'archive', 'unarchive'). Archiving requires a Jira plan that supports it"`
 	ProjectKey       string `json:"project_key,omitempty" jsonschema:"Project key (for 'create', 'list_types')"`
@@ -81,6 +81,12 @@ func ManageIssuesHandler(c *jira.Client, perms map[string]bool) func(context.Con
 			return handleArchiveIssues(c, perms, args, false)
 		case "unarchive":
 			return handleArchiveIssues(c, perms, args, true)
+		case "list_transitions":
+			return handleListTransitions(c, args)
+		case "add_labels":
+			return handleModifyLabels(c, perms, args, false)
+		case "remove_labels":
+			return handleModifyLabels(c, perms, args, true)
 		default:
 			return ToolResultError(fmt.Sprintf("unknown action: %s", args.Action)), nil, nil
 		}
@@ -167,6 +173,43 @@ func handleUpdateIssue(c *jira.Client, perms map[string]bool, args ManageIssuesA
 	}
 
 	return ToolResultText(fmt.Sprintf("Issue %s updated successfully", args.IssueKey)), nil, nil
+}
+
+func handleListTransitions(c *jira.Client, args ManageIssuesArgs) (*mcp.CallToolResult, any, error) {
+	if args.IssueKey == "" {
+		return ToolResultError("issue_key is required for 'list_transitions' action"), nil, nil
+	}
+	tr, err := c.GetTransitions(args.IssueKey)
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to get transitions: %v", err)), nil, nil
+	}
+	return ToolResultText(jira.SafeJSON(tr, 10000)), nil, nil
+}
+
+func handleModifyLabels(c *jira.Client, perms map[string]bool, args ManageIssuesArgs, remove bool) (*mcp.CallToolResult, any, error) {
+	if !perms["EDIT_ISSUES"] {
+		return ToolResultError("token lacks EDIT_ISSUES permission"), nil, nil
+	}
+	if args.IssueKey == "" {
+		return ToolResultError("issue_key is required for label actions"), nil, nil
+	}
+	labels := parseCSV(args.Labels)
+	if len(labels) == 0 {
+		return ToolResultError("labels is required (comma-separated) for label actions"), nil, nil
+	}
+
+	var err error
+	verb := "added"
+	if remove {
+		verb = "removed"
+		err = c.ModifyLabels(args.IssueKey, nil, labels)
+	} else {
+		err = c.ModifyLabels(args.IssueKey, labels, nil)
+	}
+	if err != nil {
+		return ToolResultError(fmt.Sprintf("failed to modify labels: %v", err)), nil, nil
+	}
+	return ToolResultText(fmt.Sprintf("%s labels %v on %s", verb, labels, args.IssueKey)), nil, nil
 }
 
 func handleArchiveIssues(c *jira.Client, perms map[string]bool, args ManageIssuesArgs, unarchive bool) (*mcp.CallToolResult, any, error) {

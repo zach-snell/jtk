@@ -97,6 +97,25 @@ func (c *Client) ReparentIssue(issueKey, newParentKey string) error {
 	return nil
 }
 
+// ModifyLabels adds and/or removes labels on an issue without disturbing the
+// labels already on it. It uses Jira's "update" verb — the "fields" verb would
+// replace the entire label set, silently dropping any labels not listed.
+func (c *Client) ModifyLabels(issueKey string, add, remove []string) error {
+	ops := make([]map[string]string, 0, len(add)+len(remove))
+	for _, l := range add {
+		ops = append(ops, map[string]string{"add": l})
+	}
+	for _, l := range remove {
+		ops = append(ops, map[string]string{"remove": l})
+	}
+	if len(ops) == 0 {
+		return fmt.Errorf("no labels to add or remove")
+	}
+	body := map[string]interface{}{"update": map[string]interface{}{"labels": ops}}
+	_, err := c.Put(fmt.Sprintf("/issue/%s", url.PathEscape(issueKey)), body)
+	return err
+}
+
 // ArchiveResult is the response from the bulk archive/unarchive endpoints.
 type ArchiveResult struct {
 	NumberOfIssuesUpdated int                    `json:"numberOfIssuesUpdated"`

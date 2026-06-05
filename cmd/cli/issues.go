@@ -328,6 +328,60 @@ false success. Use --detach to remove the parent.`,
 	},
 }
 
+var issuesTransitionsCmd = &cobra.Command{
+	Use:   "transitions [issue-key]",
+	Short: "List the valid transitions (and target statuses) for an issue",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		client := getClient()
+		tr, err := client.GetTransitions(issueKey)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		PrintOrJSON(cmd, tr, func() {
+			fmt.Printf("Valid transitions for %s:\n", issueKey)
+			for _, t := range tr.Transitions {
+				to := ""
+				if t.To != nil && t.To.Name != "" {
+					to = " → " + t.To.Name
+				}
+				fmt.Printf("  %s%s\n", t.Name, to)
+			}
+		})
+	},
+}
+
+var issuesLabelCmd = &cobra.Command{
+	Use:   "label [issue-key] --add <label> --remove <label>",
+	Short: "Add and/or remove labels without clobbering existing ones",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		add, _ := cmd.Flags().GetStringSlice("add")
+		remove, _ := cmd.Flags().GetStringSlice("remove")
+		if len(add) == 0 && len(remove) == 0 {
+			fmt.Fprintln(os.Stderr, "Error: provide at least one --add or --remove")
+			os.Exit(1)
+		}
+		client := getClient()
+		if err := client.ModifyLabels(issueKey, add, remove); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Updated labels on %s (added %v, removed %v)\n", issueKey, add, remove)
+	},
+}
+
 var issuesArchiveCmd = &cobra.Command{
 	Use:   "archive <issue-key>...",
 	Short: "Archive issues (remove from boards/backlog; reversible)",
@@ -376,6 +430,8 @@ func init() {
 	issuesCmd.AddCommand(issuesCommentCmd)
 	issuesCmd.AddCommand(issuesMoveCmd)
 	issuesCmd.AddCommand(issuesReparentCmd)
+	issuesCmd.AddCommand(issuesTransitionsCmd)
+	issuesCmd.AddCommand(issuesLabelCmd)
 	issuesCmd.AddCommand(issuesArchiveCmd)
 	issuesCmd.AddCommand(issuesUnarchiveCmd)
 
@@ -395,4 +451,7 @@ func init() {
 
 	issuesReparentCmd.Flags().String("to", "", "New parent/epic issue key")
 	issuesReparentCmd.Flags().Bool("detach", false, "Remove the issue's parent instead of setting one")
+
+	issuesLabelCmd.Flags().StringSlice("add", nil, "Label to add (repeatable)")
+	issuesLabelCmd.Flags().StringSlice("remove", nil, "Label to remove (repeatable)")
 }
