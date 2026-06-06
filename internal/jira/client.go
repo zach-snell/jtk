@@ -24,6 +24,7 @@ type Client struct {
 	email     string
 	token     string
 	tokenType TokenType
+	cloudID   string // Atlassian cloud ID; set for scoped, lazily fetched for classic
 
 	rateLimiter *RateLimiter
 }
@@ -130,6 +131,7 @@ func NewScopedClient(cloudID, domain, email, token string) *Client {
 		email:       email,
 		token:       token,
 		tokenType:   TokenTypeScoped,
+		cloudID:     cloudID,
 		rateLimiter: NewRateLimiter(20, 3*time.Second),
 	}
 }
