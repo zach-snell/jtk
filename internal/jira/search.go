@@ -73,6 +73,32 @@ func (c *Client) SearchJQLPaginated(jql string, maxResults int, nextPageToken st
 	return &result, nil
 }
 
+// SearchAllJQL fetches every issue matching the JQL by following the
+// cursor-based pagination (the new /search/jql endpoint does not return a total
+// count). It stops at hardCap issues; the returned bool is true if the cap was
+// reached before the results were exhausted — i.e. the result set was truncated.
+func (c *Client) SearchAllJQL(jql string, hardCap int) ([]Issue, bool, error) {
+	const pageSize = 100
+	var all []Issue
+	token := ""
+	for {
+		res, err := c.SearchJQLPaginated(jql, pageSize, token)
+		if err != nil {
+			return nil, false, err
+		}
+		all = append(all, res.Issues...)
+		if hardCap > 0 && len(all) >= hardCap {
+			// Truncated if we actually dropped issues, or more pages remain.
+			more := len(all) > hardCap || (!res.IsLast && res.NextPageToken != "")
+			return all[:hardCap], more, nil
+		}
+		if res.IsLast || res.NextPageToken == "" {
+			return all, false, nil
+		}
+		token = res.NextPageToken
+	}
+}
+
 // QuickSearch performs a text-based search using JQL text matching.
 func (c *Client) QuickSearch(text, projectKey string, maxResults int) (*SearchResult, error) {
 	jql := fmt.Sprintf("text ~ %q", text)

@@ -59,14 +59,14 @@ The HTTP client paces itself and retries on 429, so large batches run unattended
 		}
 
 		client := getClient()
-		res, err := client.SearchJQL(jql, 0, maxN)
+		issues, truncated, err := client.SearchAllJQL(jql, maxN)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
 
-		keys := make([]string, len(res.Issues))
-		for i, iss := range res.Issues {
+		keys := make([]string, len(issues))
+		for i, iss := range issues {
 			keys[i] = iss.Key
 		}
 
@@ -76,11 +76,20 @@ The HTTP client paces itself and retries on 429, so large batches run unattended
 			action = op + " " + value
 		}
 		fmt.Printf("JQL matched %d issue(s). Operation: %s\n", len(keys), action)
-		for _, iss := range res.Issues {
+		for _, iss := range issues {
 			fmt.Printf("  %s  %s\n", iss.Key, truncate(iss.Fields.Summary, 60))
 		}
 		if len(keys) == 0 {
 			return
+		}
+		// Never silently apply to a partial set: if more issues match than the
+		// --max cap, refuse to execute so nothing is quietly left untouched.
+		if truncated {
+			fmt.Fprintf(os.Stderr, "\nWARNING: more than %d issues match — only the first %d were fetched.\n", maxN, maxN)
+			if execute {
+				fmt.Fprintln(os.Stderr, "Refusing to apply to a truncated set. Raise --max or narrow the JQL.")
+				os.Exit(1)
+			}
 		}
 		if !execute {
 			fmt.Println("\nDry run. Re-run with --execute to apply.")
@@ -154,5 +163,5 @@ func init() {
 	RootCmd.AddCommand(bulkCmd)
 	bulkCmd.Flags().String("jql", "", "JQL query selecting the issues to operate on (required)")
 	bulkCmd.Flags().Bool("execute", false, "Apply the change (default is a dry-run preview)")
-	bulkCmd.Flags().Int("max", 100, "Maximum number of issues to operate on")
+	bulkCmd.Flags().Int("max", 1000, "Safety cap on issues to operate on; bulk refuses to run if more match")
 }
