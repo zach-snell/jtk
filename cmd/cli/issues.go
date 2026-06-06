@@ -328,6 +328,30 @@ false success. Use --detach to remove the parent.`,
 	},
 }
 
+var issuesDeleteCmd = &cobra.Command{
+	Use:   "delete [issue-key]",
+	Short: "Delete an issue (destructive, not reversible)",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		yes, _ := cmd.Flags().GetBool("yes")
+		if !yes {
+			fmt.Fprintf(os.Stderr, "Refusing to delete %s without --yes (this is not reversible)\n", issueKey)
+			os.Exit(1)
+		}
+		client := getClient()
+		if err := client.DeleteIssue(issueKey); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Deleted %s\n", issueKey)
+	},
+}
+
 var issuesTransitionsCmd = &cobra.Command{
 	Use:   "transitions [issue-key]",
 	Short: "List the valid transitions (and target statuses) for an issue",
@@ -430,6 +454,7 @@ func init() {
 	issuesCmd.AddCommand(issuesCommentCmd)
 	issuesCmd.AddCommand(issuesMoveCmd)
 	issuesCmd.AddCommand(issuesReparentCmd)
+	issuesCmd.AddCommand(issuesDeleteCmd)
 	issuesCmd.AddCommand(issuesTransitionsCmd)
 	issuesCmd.AddCommand(issuesLabelCmd)
 	issuesCmd.AddCommand(issuesArchiveCmd)
@@ -454,4 +479,6 @@ func init() {
 
 	issuesLabelCmd.Flags().StringSlice("add", nil, "Label to add (repeatable)")
 	issuesLabelCmd.Flags().StringSlice("remove", nil, "Label to remove (repeatable)")
+
+	issuesDeleteCmd.Flags().BoolP("yes", "y", false, "Confirm deletion (required; not reversible)")
 }
