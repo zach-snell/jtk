@@ -328,6 +328,77 @@ false success. Use --detach to remove the parent.`,
 	},
 }
 
+var issuesUpdateCmd = &cobra.Command{
+	Use:   "update [issue-key]",
+	Short: "Update an issue's fields (summary, description, priority, assignee, due date)",
+	Long: `Update an issue's fields. Only the flags you pass are changed.
+For labels use 'jtk issues label' (non-clobbering); for the parent use
+'jtk issues reparent'.`,
+	Args: cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		summary, _ := cmd.Flags().GetString("summary")
+		description, _ := cmd.Flags().GetString("description")
+		priority, _ := cmd.Flags().GetString("priority")
+		assignee, _ := cmd.Flags().GetString("assignee")
+		dueDate, _ := cmd.Flags().GetString("due-date")
+
+		req := jira.BuildUpdateIssueRequest(jira.UpdateIssueParams{
+			Summary:     summary,
+			Description: description,
+			Priority:    priority,
+			AssigneeID:  assignee,
+			DueDate:     dueDate,
+		})
+		if len(req.Fields) == 0 {
+			fmt.Fprintln(os.Stderr, "Error: provide at least one field to update (--summary, --description, --priority, --assignee, --due-date)")
+			os.Exit(1)
+		}
+		client := getClient()
+		if err := client.UpdateIssue(issueKey, req); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Updated %s\n", issueKey)
+	},
+}
+
+var issuesAssignCmd = &cobra.Command{
+	Use:   "assign [issue-key] --to <account-id>",
+	Short: "Assign an issue (use --to unassigned to clear)",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		issueKey, err := ResolveIssueKey(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		to, _ := cmd.Flags().GetString("to")
+		if to == "" {
+			fmt.Fprintln(os.Stderr, "Error: --to <account-id> is required (or --to unassigned)")
+			os.Exit(1)
+		}
+		accountID := to
+		if to == "unassigned" || to == "none" {
+			accountID = ""
+		}
+		client := getClient()
+		if err := client.AssignIssue(issueKey, accountID); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		if accountID == "" {
+			fmt.Printf("Unassigned %s\n", issueKey)
+		} else {
+			fmt.Printf("Assigned %s to %s\n", issueKey, accountID)
+		}
+	},
+}
+
 var issuesDeleteCmd = &cobra.Command{
 	Use:   "delete [issue-key]",
 	Short: "Delete an issue (destructive, not reversible)",
@@ -454,6 +525,8 @@ func init() {
 	issuesCmd.AddCommand(issuesCommentCmd)
 	issuesCmd.AddCommand(issuesMoveCmd)
 	issuesCmd.AddCommand(issuesReparentCmd)
+	issuesCmd.AddCommand(issuesUpdateCmd)
+	issuesCmd.AddCommand(issuesAssignCmd)
 	issuesCmd.AddCommand(issuesDeleteCmd)
 	issuesCmd.AddCommand(issuesTransitionsCmd)
 	issuesCmd.AddCommand(issuesLabelCmd)
@@ -481,4 +554,12 @@ func init() {
 	issuesLabelCmd.Flags().StringSlice("remove", nil, "Label to remove (repeatable)")
 
 	issuesDeleteCmd.Flags().BoolP("yes", "y", false, "Confirm deletion (required; not reversible)")
+
+	issuesUpdateCmd.Flags().StringP("summary", "s", "", "New summary/title")
+	issuesUpdateCmd.Flags().StringP("description", "d", "", "New description")
+	issuesUpdateCmd.Flags().String("priority", "", "New priority: Highest, High, Medium, Low, Lowest")
+	issuesUpdateCmd.Flags().String("assignee", "", "New assignee account ID ('unassigned' to clear)")
+	issuesUpdateCmd.Flags().String("due-date", "", "Due date (YYYY-MM-DD)")
+
+	issuesAssignCmd.Flags().String("to", "", "Assignee account ID ('unassigned' to clear)")
 }

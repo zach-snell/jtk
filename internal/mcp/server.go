@@ -293,4 +293,10 @@ func registerTools(s *mcp.Server, c *jira.Client) {
 		Name:        "manage_metrics",
 		Description: "Get issue lifecycle metrics for dashboards and visualizations. Actions: 'get_dates' (raw date info, status transitions, time-in-status), 'get_metrics' (computed cycle time, lead time, time in current status, status breakdown)",
 	}, ManageMetricsHandler(c))
+
+	// ─── Automation ─────────────────────────────────────────────────
+	addTool(s, disabled, mcp.Tool{
+		Name:        "manage_automation",
+		Description: "Manage Jira Automation rules. Actions: 'list', 'get', 'enable', 'disable', 'delete', 'create'. Creating from scratch is fiddly — 'get' an existing rule as a template first",
+	}, ManageAutomationHandler(c))
 }
