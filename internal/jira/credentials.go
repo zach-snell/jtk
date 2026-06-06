@@ -224,37 +224,39 @@ func RemoveCredentials() error {
 	return nil
 }
 
-// ScopeReadOnly contains the granular scopes required for read-only access.
-var ScopeReadOnly = []string{
-	"read:me",
-	"read:jql:jira",
-	"read:issue-details:jira",
-	"read:issue-type:jira",
-	"read:issue-link:jira",
-	"read:issue-worklog:jira",
-	"read:issue.changelog:jira",
-	"read:issue.transition:jira",
-	"read:comment:jira",
-	"read:attachment:jira",
-	"read:project:jira",
-	"read:project-version:jira",
-	"read:status:jira",
-	"read:user:jira",
-	"read:permission:jira",
-	"read:board-scope:jira-software",
-	"read:sprint:jira-software",
-	"read:dev-info:jira",
+// ScopeClassic is the recommended scope set: classic scopes that grant full
+// read + write across jtk's surface. Classic scopes cover whole endpoint
+// families in one grant and avoid the pitfalls of granular scopes (see
+// ScopeGranularReadOnly). manage:jira-project covers boards and sprints.
+var ScopeClassic = []string{
+	"read:jira-user",
+	"read:jira-work",
+	"write:jira-work",
+	"manage:jira-project",
 }
 
-// ScopeWrite contains the additional granular scopes for write operations.
-var ScopeWrite = []string{
-	"write:issue:jira",
-	"write:comment:jira",
-	"write:issue-worklog:jira",
-	"write:issue-link:jira",
-	"write:attachment:jira",
-	"write:sprint:jira-software",
-	"delete:issue:jira",
+// ScopeClassicReadOnly is the classic scope set for read-only access.
+var ScopeClassicReadOnly = []string{
+	"read:jira-user",
+	"read:jira-work",
+}
+
+// ScopeGranularReadOnly is the full granular read-only scope set. Granular
+// scopes are Beta and finicky and are NOT recommended: "fat" endpoints require
+// every satellite scope (e.g. /myself needs read:user + read:avatar +
+// read:group + read:application-role — miss one and the gateway returns
+// "scope does not match"), and personal API tokens currently return 401 on POST
+// through the gateway, making granular tokens effectively read-only. Prefer
+// ScopeClassic. This list is provided for read-only granular setups.
+var ScopeGranularReadOnly = []string{
+	"read:application-role:jira", "read:avatar:jira", "read:board-scope:jira-software",
+	"read:comment:jira", "read:dev-info:jira", "read:field:jira",
+	"read:field-configuration:jira", "read:group:jira", "read:issue-details:jira",
+	"read:issue-meta:jira", "read:issue-type:jira", "read:issue.changelog:jira",
+	"read:issue.transition:jira", "read:jql:jira", "read:permission:jira",
+	"read:project:jira", "read:project-version:jira", "read:project.component:jira",
+	"read:sprint:jira-software", "read:status:jira", "read:user:jira",
+	"read:user.property:jira",
 }
 
 // InteractiveLogin prompts the user for Jira credentials and stores them.
@@ -268,17 +270,25 @@ func InteractiveLogin() error {
 	fmt.Println("Create an API Token at:")
 	fmt.Println("  https://id.atlassian.com/manage-profile/security/api-tokens")
 	fmt.Println()
-	fmt.Println("Select \"Jira\" as the app, then add these scopes:")
+	fmt.Println("Select \"Jira\" as the app, then add scopes.")
 	fmt.Println()
-	fmt.Println("  Read-only (18 scopes):")
-	for _, s := range ScopeReadOnly {
+	fmt.Println("RECOMMENDED — classic scopes (full read + write, fewest surprises):")
+	for _, s := range ScopeClassic {
 		fmt.Printf("    %s\n", s)
 	}
 	fmt.Println()
-	fmt.Println("  Write access (add these 7 for full access):")
-	for _, s := range ScopeWrite {
-		fmt.Printf("    %s\n", s)
-	}
+	fmt.Println("  Comma-separated (paste into the scope filter):")
+	fmt.Printf("    %s\n", strings.Join(ScopeClassic, ","))
+	fmt.Println()
+	fmt.Println("  Read-only? Use just:")
+	fmt.Printf("    %s\n", strings.Join(ScopeClassicReadOnly, ","))
+	fmt.Println()
+	fmt.Println("Granular scopes also work (jtk auto-detects the token type), but they")
+	fmt.Println("are Beta and finicky — \"fat\" endpoints need every satellite scope, and")
+	fmt.Println("personal API tokens currently return 401 on POST through the gateway,")
+	fmt.Println("making them effectively read-only. Prefer classic above. For a granular")
+	fmt.Println("read-only token, paste:")
+	fmt.Printf("    %s\n", strings.Join(ScopeGranularReadOnly, ","))
 	fmt.Println()
 	fmt.Println("Mutation tools are dynamically hidden if your token lacks write scopes.")
 	fmt.Println("To explicitly deny tools despite having full scopes, use:")

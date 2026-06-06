@@ -146,6 +146,16 @@ jtk mcp --port 8080
 2. **Permission introspection** — jtk queries `/mypermissions` at startup and dynamically hides mutation tools your account lacks
 3. **Tool denial** — Explicitly hide tools: `JIRA_DISABLED_TOOLS="manage_boards,manage_worklogs"`
 
+### Token scopes — use classic
+
+When creating an API token with scopes, **prefer classic scopes** for full read + write:
+
+```
+read:jira-user,read:jira-work,write:jira-work,manage:jira-project
+```
+
+(Read-only: `read:jira-user,read:jira-work`.) jtk auto-detects the token type, so granular scopes also work — but granular is **Beta and finicky**: "fat" endpoints require every satellite scope (e.g. `/myself` needs `read:user` + `read:avatar` + `read:group` + `read:application-role`), and granular *personal API tokens* currently return `401 Unauthorized; scope does not match` on POST requests through the gateway, making them effectively read-only. `jtk auth` prints copy-paste scope lists for both.
+
 ## Development
 
 ```bash
